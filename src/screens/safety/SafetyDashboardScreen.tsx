@@ -1,0 +1,329 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafetyStackParamList } from '../../navigation/SafetyNavigator';
+import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { Button, Card } from '../../components/ui';
+
+type SafetyDashboardScreenProps = {
+  navigation: NativeStackNavigationProp<SafetyStackParamList, 'SafetyDashboard'>;
+};
+
+export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScreenProps) {
+  const [hasActiveCheckin, setHasActiveCheckin] = useState(false);
+
+  const handleStartCheckin = () => {
+    Alert.alert(
+      'Start Safety Check-in',
+      'This will share your location with your emergency contacts during your date.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Start', onPress: () => {
+          setHasActiveCheckin(true);
+          navigation.navigate('ActiveCheckin');
+        }},
+      ]
+    );
+  };
+
+  const safetyFeatures = [
+    {
+      icon: '📍',
+      title: 'Live Location Sharing',
+      description: 'Share your real-time location with trusted contacts',
+    },
+    {
+      icon: '⏰',
+      title: 'Timed Check-ins',
+      description: 'Set automatic check-in reminders during dates',
+    },
+    {
+      icon: '🚨',
+      title: 'Emergency SOS',
+      description: 'Quick access to emergency services',
+    },
+    {
+      icon: '👥',
+      title: 'Trusted Contacts',
+      description: 'Designate friends and family as emergency contacts',
+    },
+  ];
+
+  const safetyTips = [
+    'Always meet in a public place for first dates',
+    'Tell a friend where you\'re going and when',
+    'Trust your instincts - if something feels off, leave',
+    'Keep your phone charged and accessible',
+    'Don\'t share personal information too quickly',
+  ];
+
+  return (
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={styles.headerEmoji}>🛡️</Text>
+          <Text style={styles.title}>Safety Center</Text>
+          <Text style={styles.subtitle}>Your safety is our priority</Text>
+        </View>
+
+        {hasActiveCheckin ? (
+          <Card variant="elevated" style={styles.activeCheckinCard}>
+            <View style={styles.activeCheckinHeader}>
+              <View style={styles.pulseContainer}>
+                <View style={styles.pulse} />
+                <Text style={styles.activeIcon}>✓</Text>
+              </View>
+              <View style={styles.activeCheckinInfo}>
+                <Text style={styles.activeCheckinTitle}>Check-in Active</Text>
+                <Text style={styles.activeCheckinTime}>Started 15 minutes ago</Text>
+              </View>
+            </View>
+            <Button
+              title="View Details"
+              onPress={() => navigation.navigate('ActiveCheckin')}
+              variant="secondary"
+              size="medium"
+              fullWidth
+            />
+          </Card>
+        ) : (
+          <Card variant="elevated" style={styles.startCheckinCard}>
+            <Text style={styles.startCheckinIcon}>📍</Text>
+            <Text style={styles.startCheckinTitle}>Start a Safety Check-in</Text>
+            <Text style={styles.startCheckinDescription}>
+              Before meeting someone, start a check-in to share your location with emergency contacts
+            </Text>
+            <Button
+              title="Start Check-in"
+              onPress={handleStartCheckin}
+              variant="primary"
+              size="large"
+              fullWidth
+            />
+          </Card>
+        )}
+
+        <Text style={styles.sectionTitle}>Safety Features</Text>
+        <Card variant="elevated" padding="none">
+          {safetyFeatures.map((feature, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>{feature.icon}</Text>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  <Text style={styles.featureDescription}>{feature.description}</Text>
+                </View>
+              </View>
+              {index < safetyFeatures.length - 1 && <View style={styles.divider} />}
+            </React.Fragment>
+          ))}
+        </Card>
+
+        <Text style={styles.sectionTitle}>Safety Tips</Text>
+        <Card variant="elevated">
+          {safetyTips.map((tip, index) => (
+            <View key={index} style={styles.tipItem}>
+              <Text style={styles.tipBullet}>•</Text>
+              <Text style={styles.tipText}>{tip}</Text>
+            </View>
+          ))}
+        </Card>
+
+        <Card variant="outlined" style={styles.emergencyCard}>
+          <Text style={styles.emergencyIcon}>🚨</Text>
+          <Text style={styles.emergencyTitle}>In an Emergency</Text>
+          <Text style={styles.emergencyText}>
+            If you feel unsafe, leave immediately and call emergency services
+          </Text>
+          <Button
+            title="Emergency: 911"
+            onPress={() => Alert.alert('Emergency', 'This would dial 911')}
+            variant="primary"
+            size="large"
+            fullWidth
+            style={styles.emergencyButton}
+          />
+        </Card>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContent: {
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xxl,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  headerEmoji: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  activeCheckinCard: {
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.success + '10',
+    borderColor: COLORS.success,
+  },
+  activeCheckinHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  pulseContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+    position: 'relative',
+  },
+  pulse: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.success,
+    opacity: 0.3,
+  },
+  activeIcon: {
+    fontSize: 24,
+    color: COLORS.white,
+  },
+  activeCheckinInfo: {
+    flex: 1,
+  },
+  activeCheckinTitle: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.success,
+  },
+  activeCheckinTime: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  startCheckinCard: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  startCheckinIcon: {
+    fontSize: 48,
+    marginBottom: SPACING.md,
+  },
+  startCheckinTitle: {
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  startCheckinDescription: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+    lineHeight: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  featureIcon: {
+    fontSize: 32,
+    marginRight: SPACING.md,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  featureDescription: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginLeft: SPACING.md + 32 + SPACING.md,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    marginBottom: SPACING.sm,
+  },
+  tipBullet: {
+    fontSize: 16,
+    color: COLORS.primary,
+    marginRight: SPACING.sm,
+    fontFamily: FONTS.bold,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.text,
+    lineHeight: 20,
+  },
+  emergencyCard: {
+    marginTop: SPACING.lg,
+    alignItems: 'center',
+    borderColor: COLORS.error,
+    backgroundColor: COLORS.error + '05',
+  },
+  emergencyIcon: {
+    fontSize: 48,
+    marginBottom: SPACING.sm,
+  },
+  emergencyTitle: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.error,
+    marginBottom: SPACING.xs,
+  },
+  emergencyText: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+  },
+  emergencyButton: {
+    backgroundColor: COLORS.error,
+  },
+});
