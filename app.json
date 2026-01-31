@@ -46,7 +46,8 @@
     },
     "plugins": [
       "expo-camera",
-      "expo-location"
+      "expo-location",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
