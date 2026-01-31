@@ -14,7 +14,7 @@ export default function EditProfileScreen() {
     height: user?.height || '',
   });
   const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.interests || []);
-  const [photos, setPhotos] = useState<string[]>(user?.photos || []);
+  const [photos, setPhotos] = useState<string[]>(user?.photos?.map(p => p.url) || []);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleAddPhoto = () => {

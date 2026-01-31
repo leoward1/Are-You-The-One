@@ -28,7 +28,11 @@ export interface User {
   verified_photo: boolean;
   verified_video: boolean;
   primary_photo?: string;
+  photo_url?: string;
+  photos?: Photo[];
   video_intro?: string;
+  occupation?: string;
+  height?: string;
   anim_enabled: boolean;
   reduce_motion: boolean;
   created_at: string;

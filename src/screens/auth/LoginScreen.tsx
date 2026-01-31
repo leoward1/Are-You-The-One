@@ -43,7 +43,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     if (!validateForm()) return;
     
     try {
-      await login(email, password);
+      await login({ email, password });
     } catch (err) {
       Alert.alert('Login Failed', error || 'Please check your credentials');
     }

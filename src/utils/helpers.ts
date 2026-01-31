@@ -23,7 +23,7 @@ export const canUnlockStage = (
   if (nextStage === 'voice') {
     const requirements = UNLOCK_REQUIREMENTS.voice;
     
-    if (requirements.tierOverride.includes(userTier)) {
+    if ((requirements.tierOverride as readonly string[]).includes(userTier)) {
       return { canUnlock: true };
     }
     
@@ -40,7 +40,7 @@ export const canUnlockStage = (
   if (nextStage === 'video') {
     const requirements = UNLOCK_REQUIREMENTS.video;
     
-    if (requirements.tierOverride.includes(userTier)) {
+    if ((requirements.tierOverride as readonly string[]).includes(userTier)) {
       return { canUnlock: true };
     }
     

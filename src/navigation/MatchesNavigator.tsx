@@ -6,7 +6,7 @@ import ChatScreen from '@/screens/matches/ChatScreen';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
-  Chat: { matchId: string };
+  Chat: { matchId: string; matchName?: string };
 };
 
 const Stack = createNativeStackNavigator<MatchesStackParamList>();

@@ -21,6 +21,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     last_name: '',
     gender: '' as 'male' | 'female' | '',
     birthdate: '',
+    city: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { signup, isLoading } = useAuthStore();
@@ -77,6 +78,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
         last_name: formData.last_name,
         gender: formData.gender as 'male' | 'female',
         birthdate: formData.birthdate,
+        city: formData.city || '',
       });
       navigation.navigate('Onboarding');
     } catch (error: any) {
