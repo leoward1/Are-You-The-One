@@ -45,32 +45,9 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera for profile photos and video intros."
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for safety check-ins during dates."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#8B1538"
-        }
-      ]
+      "expo-camera",
+      "expo-location"
     ],
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
-    },
     "extra": {
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
