@@ -1,58 +1,37 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-23.11"; # or "unstable"
+  channel = "stable-24.11"; 
 
-  # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.nodejs_20
-    pkgs.yarn
-    pkgs.nodePackages.npm
-    pkgs.jdk17
+    pkgs.bun
   ];
 
-  # Sets environment variables in the workspace
   env = {
-    EXPO_NO_DOTENV = "1";
+    # Replace the text below with your actual Expo token
+    EXPO_TOKEN = "your_actual_expo_token_here"; 
   };
 
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
-    extensions = [
-      "msjsdiag.vscode-react-native"
-      "dsznajder.es7-react-js-snippets"
-      "dbaeumer.vscode-eslint"
-      "esbenp.prettier-vscode"
-    ];
+    extensions = [ "expo.vscode-expo-tools" ];
 
-    # Enable previews
     previews = {
       enable = true;
       previews = {
-        web = {
-          command = ["npm" "run" "web"];
-          manager = "web";
-          env = {
-            PORT = "$PORT";
-          };
-        };
-        android = {
-          command = ["npm" "run" "android"];
-          manager = "flutter";
+        # This triggers the browser-based iOS simulator
+        ios = {
+          command = ["npx" "expo" "start" "--ios" "--port" "$PORT" "--host" "localhost"];
+          manager = "ios";
         };
       };
     };
 
-    # Workspace lifecycle hooks
     workspace = {
-      # Runs when a workspace is first created
       onCreate = {
-        npm-install = "npm install";
+        install = "bun install";
       };
-      # Runs when the workspace is (re)started
+      # This ensures the app starts as soon as you open the workspace
       onStart = {
-        start-metro = "npm start";
+        start-expo = "npx expo start --ios";
       };
     };
   };
