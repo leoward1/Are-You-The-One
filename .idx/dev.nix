@@ -7,8 +7,7 @@
   ];
 
   env = {
-    # Replace the text below with your actual Expo token
-    EXPO_TOKEN = "your_actual_expo_token_here"; 
+    EXPO_TOKEN = "z6K-hvkVcXQ6wj79iB96B-ICsaoIdZu-qIRabjnr"; 
   };
 
   idx = {
