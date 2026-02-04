@@ -3,7 +3,7 @@
 
   packages = [
     pkgs.nodejs_20
-    pkgs.bun
+    pkgs.jdk17
   ];
 
   env = {
@@ -16,9 +16,9 @@
     previews = {
       enable = true;
       previews = {
-        web = {
-          command = ["npx" "expo" "start" "--web"];
-          manager = "web";
+        android = {
+          command = ["npx" "expo" "start" "--android"];
+          manager = "android";
         };
       };
     };
