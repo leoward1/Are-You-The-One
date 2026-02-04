@@ -16,9 +16,8 @@
     previews = {
       enable = true;
       previews = {
-        # Web preview for React Native app
         web = {
-          command = ["npx" "expo" "start" "--web" "--port" "$PORT"];
+          command = ["npx" "expo" "start" "--web"];
           manager = "web";
         };
       };
@@ -27,9 +26,6 @@
     workspace = {
       onCreate = {
         install = "npm install";
-      };
-      onStart = {
-        start-expo = "npx expo start --web";
       };
     };
   };
