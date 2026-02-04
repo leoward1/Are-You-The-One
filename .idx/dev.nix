@@ -7,7 +7,8 @@
   ];
 
   env = {
-    EXPO_TOKEN = "z6K-hvkVcXQ6wj79iB96B-ICsaoIdZu-qIRabjnr"; 
+    # EXPO_TOKEN is set via IDX Secret Environment Variables
+    # Go to IDX Settings > Environment Variables > Add Secret
   };
 
   idx = {
