@@ -16,10 +16,10 @@
     previews = {
       enable = true;
       previews = {
-        # This triggers the browser-based iOS simulator
-        ios = {
-          command = ["npx" "expo" "start" "--ios" "--port" "$PORT" "--host" "localhost"];
-          manager = "ios";
+        # Web preview for React Native app
+        web = {
+          command = ["npx" "expo" "start" "--web" "--port" "$PORT"];
+          manager = "web";
         };
       };
     };
@@ -28,9 +28,8 @@
       onCreate = {
         install = "bun install";
       };
-      # This ensures the app starts as soon as you open the workspace
       onStart = {
-        start-expo = "npx expo start --ios";
+        start-expo = "npx expo start --web";
       };
     };
   };
