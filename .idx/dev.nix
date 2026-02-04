@@ -26,7 +26,7 @@
 
     workspace = {
       onCreate = {
-        install = "bun install";
+        install = "npm install";
       };
       onStart = {
         start-expo = "npx expo start --web";
