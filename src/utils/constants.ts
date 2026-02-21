@@ -1,7 +1,7 @@
 export const COLORS = {
-  primary: '#FF6B9D',
-  secondary: '#FF8FAB',
-  accent: '#FFB3C6',
+  primary: '#8B1538', // Burgundy from logo
+  secondary: '#C41E3A', // Lighter burgundy/red
+  accent: '#D4AF37', // Gold from logo arrow
   white: '#FFFFFF',
   background: '#FFFFFF',
   backgroundDark: '#1A1A1A',
@@ -15,8 +15,8 @@ export const COLORS = {
   success: '#34C759',
   warning: '#FF9500',
   info: '#007AFF',
-  rose: '#FF1744',
-  kiss: '#E91E63',
+  rose: '#C41E3A', // Updated to match logo red
+  kiss: '#8B1538', // Updated to match logo burgundy
   overlay: 'rgba(0, 0, 0, 0.5)',
 };
 
