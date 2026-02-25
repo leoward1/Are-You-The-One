@@ -1,6 +1,25 @@
 from PIL import Image
 import os
 
+
+def remove_near_black_background(img: Image.Image, threshold: int = 28) -> Image.Image:
+    if img.mode != 'RGBA':
+        img = img.convert('RGBA')
+
+    pixels = img.load()
+    width, height = img.size
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            if a == 0:
+                continue
+
+            if r <= threshold and g <= threshold and b <= threshold:
+                pixels[x, y] = (r, g, b, 0)
+
+    return img
+
 # Paths
 assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
 print(f"Assets directory: {assets_dir}")
@@ -33,6 +52,8 @@ print("\n✓ Logo found! Processing...\n")
 logo = Image.open(logo_path)
 if logo.mode != 'RGBA':
     logo = logo.convert('RGBA')
+
+logo = remove_near_black_background(logo, threshold=28)
 
 print(f"Source logo size: {logo.size}")
 print(f"Source logo mode: {logo.mode}")
