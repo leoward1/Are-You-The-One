@@ -1,5 +1,4 @@
-import { apiService } from './api';
-import { API_ENDPOINTS } from '@/utils/constants';
+import { supabase } from '@/config/supabase';
 import { SafetyCheckin, Coordinates } from '@/types';
 
 interface StartCheckinData {
@@ -12,25 +11,71 @@ interface StartCheckinData {
 
 class SafetyService {
   async startCheckin(data: StartCheckinData): Promise<SafetyCheckin> {
-    return apiService.post<SafetyCheckin>(API_ENDPOINTS.SAFETY.CHECKINS, data);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .insert({
+        user_id: user.id,
+        meeting_with: data.meeting_with,
+        expected_end: data.expected_end,
+        auto_alert_minutes: data.auto_alert_minutes,
+        emergency_contact_email: data.emergency_contact_email || null,
+        emergency_contact_phone: data.emergency_contact_phone || null,
+        status: 'active',
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
   }
 
   async updateLocation(checkinId: string, coords: Coordinates): Promise<SafetyCheckin> {
-    return apiService.patch<SafetyCheckin>(
-      API_ENDPOINTS.SAFETY.UPDATE_LOCATION(checkinId),
-      {
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      }
-    );
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .update({
+        last_latitude: coords.latitude,
+        last_longitude: coords.longitude,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', checkinId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
   }
 
   async completeCheckin(checkinId: string): Promise<SafetyCheckin> {
-    return apiService.post<SafetyCheckin>(API_ENDPOINTS.SAFETY.COMPLETE(checkinId));
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', checkinId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
   }
 
   async triggerSOS(checkinId: string): Promise<SafetyCheckin> {
-    return apiService.post<SafetyCheckin>(API_ENDPOINTS.SAFETY.SOS(checkinId));
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .update({
+        status: 'sos_triggered',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', checkinId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
   }
 }
 

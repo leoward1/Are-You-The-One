@@ -10,9 +10,12 @@ import { useAuthStore } from './src/store';
 
 export default function App() {
   const loadUser = useAuthStore((state: any) => state.loadUser);
+  const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
 
   useEffect(() => {
     loadUser();
+    const unsubscribe = initAuthListener();
+    return () => unsubscribe();
   }, []);
 
   return (
