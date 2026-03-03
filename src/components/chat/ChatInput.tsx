@@ -16,6 +16,7 @@ interface ChatInputProps {
   onAttachPress?: () => void;
   onDateSuggest?: () => void;
   onGamePress?: () => void;
+  onReviewPress?: () => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -26,6 +27,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onAttachPress,
   onDateSuggest,
   onGamePress,
+  onReviewPress,
   placeholder = 'Type a message...',
   disabled = false,
 }) => {
@@ -59,6 +61,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           >
             <Text style={styles.actionEmoji}>🎮</Text>
             <Text style={styles.actionLabel}>Play Game</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={() => { setShowActions(false); onReviewPress?.(); }}
+          >
+            <Text style={styles.actionEmoji}>⭐</Text>
+            <Text style={styles.actionLabel}>Review</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionItem} onPress={onAttachPress}>
             <Text style={styles.actionEmoji}>📷</Text>

@@ -4,11 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MatchListScreen from '@/screens/matches/MatchListScreen';
 import ChatScreen from '@/screens/matches/ChatScreen';
 import DateSuggestionsScreen from '@/screens/dates/DateSuggestionsScreen';
+import AddReviewScreen from '@/screens/matches/AddReviewScreen';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
   Chat: { matchId: string; matchName?: string };
   DateSuggestions: { matchId: string };
+  AddReview: { matchId: string; partnerName: string };
 };
 
 const Stack = createNativeStackNavigator<MatchesStackParamList>();
@@ -30,6 +32,11 @@ export default function MatchesNavigator() {
         name="DateSuggestions"
         component={DateSuggestionsScreen}
         options={{ title: 'Suggest a Date' }}
+      />
+      <Stack.Screen
+        name="AddReview"
+        component={AddReviewScreen}
+        options={{ title: 'Leave a Review' }}
       />
     </Stack.Navigator>
   );

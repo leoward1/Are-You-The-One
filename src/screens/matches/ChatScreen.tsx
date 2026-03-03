@@ -190,6 +190,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         onSend={handleSend}
         onDateSuggest={handleDateSuggest}
         onGamePress={handleGamePress}
+        onReviewPress={() => navigation.navigate('AddReview', { matchId, partnerName: matchName || 'Your Match' })}
       />
     </SafeAreaView>
   );
