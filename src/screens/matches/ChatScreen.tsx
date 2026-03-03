@@ -59,11 +59,34 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       }
     });
 
+    // Subscribe to incoming calls
+    const callUnsubscribe = callService.subscribeToCalls(matchId, (session) => {
+      if (session.status === 'ringing' && session.user_a_id !== user?.id) {
+        Alert.alert(
+          'Incoming Call',
+          `${matchName} is calling you!`,
+          [
+            { text: 'Decline', style: 'cancel', onPress: () => callService.endCall(session.id) },
+            {
+              text: 'Answer',
+              onPress: () => navigation.navigate('Call', {
+                matchId,
+                partnerName: matchName || 'Match',
+                callType: session.kind as any,
+                sessionId: session.id
+              })
+            },
+          ]
+        );
+      }
+    });
+
     return () => {
       unsubscribe();
+      callUnsubscribe.unsubscribe();
       chatService.markAsRead(matchId).catch(console.error);
     };
-  }, [matchId, fetchMessages]);
+  }, [matchId, fetchMessages, user?.id, matchName, navigation]);
 
   const handleSend = async (content: string) => {
     if (!content.trim()) return;
@@ -171,14 +194,22 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           <TouchableOpacity
             style={[styles.headerAction, !isVoiceUnlocked && styles.disabledAction]}
             disabled={!isVoiceUnlocked}
-            onPress={() => !isVoiceUnlocked && Alert.alert('Locked', 'Send 10 messages to unlock Voice calls!')}
+            onPress={() => isVoiceUnlocked ? navigation.navigate('Call', {
+              matchId,
+              partnerName: matchName || 'Match',
+              callType: 'voice'
+            }) : Alert.alert('Locked', 'Send 10 messages to unlock Voice calls!')}
           >
             <Text style={[styles.actionIcon, !isVoiceUnlocked && styles.disabledText]}>📞</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.headerAction, !isVideoUnlocked && styles.disabledAction]}
             disabled={!isVideoUnlocked}
-            onPress={() => !isVideoUnlocked && Alert.alert('Locked', 'Complete 1 voice call to unlock Video calls!')}
+            onPress={() => isVideoUnlocked ? navigation.navigate('Call', {
+              matchId,
+              partnerName: matchName || 'Match',
+              callType: 'video'
+            }) : Alert.alert('Locked', 'Complete 1 voice call to unlock Video calls!')}
           >
             <Text style={[styles.actionIcon, !isVideoUnlocked && styles.disabledText]}>📹</Text>
           </TouchableOpacity>

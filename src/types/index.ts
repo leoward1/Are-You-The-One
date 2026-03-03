@@ -121,7 +121,8 @@ export interface CallSession {
   started_at: string;
   ended_at?: string;
   duration_seconds?: number;
-  status: 'active' | 'completed' | 'failed';
+  status: 'active' | 'completed' | 'failed' | 'ringing' | 'declined';
+  daily_url?: string;
 }
 
 export interface SafetyCheckin {

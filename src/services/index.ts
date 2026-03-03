@@ -4,5 +4,6 @@ export { chatService } from './chat.service';
 export { safetyService } from './safety.service';
 export { dateService } from './date.service';
 export { reviewService } from './review.service';
+export { callService } from './call.service';
 export { subscriptionService } from './subscription.service';
 export { supabase } from '../config/supabase';
