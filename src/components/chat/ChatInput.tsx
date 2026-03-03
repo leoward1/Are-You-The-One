@@ -3,6 +3,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Text,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +14,8 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   onVoicePress?: () => void;
   onAttachPress?: () => void;
+  onDateSuggest?: () => void;
+  onGamePress?: () => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -21,10 +24,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   onVoicePress,
   onAttachPress,
+  onDateSuggest,
+  onGamePress,
   placeholder = 'Type a message...',
   disabled = false,
 }) => {
   const [message, setMessage] = useState('');
+  const [showActions, setShowActions] = useState(false);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
@@ -38,14 +44,37 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
-      <View style={styles.container}>
-        {onAttachPress && (
-          <TouchableOpacity style={styles.iconButton} onPress={onAttachPress}>
-            <View style={styles.iconPlaceholder}>
-              <View style={styles.plusIcon} />
-            </View>
+      {showActions && (
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={() => { setShowActions(false); onDateSuggest?.(); }}
+          >
+            <Text style={styles.actionEmoji}>📍</Text>
+            <Text style={styles.actionLabel}>Date Idea</Text>
           </TouchableOpacity>
-        )}
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={() => { setShowActions(false); onGamePress?.(); }}
+          >
+            <Text style={styles.actionEmoji}>🎮</Text>
+            <Text style={styles.actionLabel}>Play Game</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} onPress={onAttachPress}>
+            <Text style={styles.actionEmoji}>📷</Text>
+            <Text style={styles.actionLabel}>Photo</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setShowActions(!showActions)}
+        >
+          <View style={styles.iconPlaceholder}>
+            <View style={[styles.plusIcon, showActions && styles.plusIconActive]} />
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -57,6 +86,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             multiline
             maxLength={1000}
             editable={!disabled}
+            onFocus={() => setShowActions(false)}
           />
         </View>
 
@@ -108,6 +138,30 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: COLORS.textSecondary,
+  },
+  plusIconActive: {
+    backgroundColor: COLORS.primary,
+    transform: [{ rotate: '45deg' }],
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    padding: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    justifyContent: 'space-around',
+  },
+  actionItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionEmoji: {
+    fontSize: 24,
+  },
+  actionLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
   inputContainer: {
     flex: 1,

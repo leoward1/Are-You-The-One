@@ -8,9 +8,10 @@ class AuthService {
       password: data.password,
       options: {
         data: {
-          name: data.name,
-          age: data.age,
+          first_name: data.first_name,
+          last_name: data.last_name,
           gender: data.gender,
+          birthdate: data.birthdate,
           city: data.city,
         },
       },
@@ -30,6 +31,7 @@ class AuthService {
       tokens: {
         access_token: authData.session?.access_token || '',
         refresh_token: authData.session?.refresh_token || '',
+        expires_in: authData.session?.expires_in || 3600,
       },
     };
   }
@@ -50,6 +52,7 @@ class AuthService {
       tokens: {
         access_token: authData.session?.access_token || '',
         refresh_token: authData.session?.refresh_token || '',
+        expires_in: authData.session?.expires_in || 3600,
       },
     };
   }

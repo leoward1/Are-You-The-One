@@ -2,10 +2,10 @@
 export type Gender = 'male' | 'female' | 'non-binary' | 'other';
 export type SubscriptionTier = 'free' | 'plus' | 'pro';
 export type LikeType = 'rose' | 'kiss';
-export type MessageType = 'text' | 'image' | 'video' | 'voice' | 'date_suggestion';
+export type MessageType = 'text' | 'image' | 'video' | 'voice' | 'date_suggestion' | 'game';
 export type UnlockedStage = 'text' | 'voice' | 'video';
 export type MatchStatus = 'matched' | 'blocked' | 'ended';
-export type CheckinStatus = 'active' | 'completed' | 'escalated';
+export type CheckinStatus = 'active' | 'completed' | 'sos_triggered' | 'escalated' | 'expired';
 export type CallKind = 'voice' | 'video';
 export type DateCategory = 'coffee' | 'museum' | 'park' | 'dinner' | 'all';
 
@@ -101,8 +101,17 @@ export interface Message {
   content?: string;
   media?: string;
   date_suggestion?: DateSuggestion;
+  game_data?: GameData;
   read: boolean;
   created_at: string;
+}
+
+export interface GameData {
+  type: 'tictactoe';
+  state: any;
+  turn_id: string;
+  winner_id?: string | 'draw';
+  is_finished: boolean;
 }
 
 export interface CallSession {

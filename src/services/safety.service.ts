@@ -24,6 +24,31 @@ class SafetyService {
         emergency_contact_email: data.emergency_contact_email || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
         status: 'active',
+        is_date_mode: false,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
+  }
+
+  async startDateMode(matchId: string, partnerName: string): Promise<SafetyCheckin> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const expectedEnd = new Date();
+    expectedEnd.setHours(expectedEnd.getHours() + 2); // Default 2 hours
+
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .insert({
+        user_id: user.id,
+        match_id: matchId,
+        meeting_with: partnerName,
+        expected_end: expectedEnd.toISOString(),
+        status: 'active',
+        is_date_mode: true,
       })
       .select()
       .single();

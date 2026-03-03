@@ -19,10 +19,12 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
       'This will share your location with your emergency contacts during your date.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Start', onPress: () => {
-          setHasActiveCheckin(true);
-          navigation.navigate('ActiveCheckin');
-        }},
+        {
+          text: 'Start', onPress: () => {
+            setHasActiveCheckin(true);
+            navigation.navigate('ActiveCheckin');
+          }
+        },
       ]
     );
   };
@@ -72,36 +74,54 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
             <View style={styles.activeCheckinHeader}>
               <View style={styles.pulseContainer}>
                 <View style={styles.pulse} />
-                <Text style={styles.activeIcon}>✓</Text>
+                <Text style={styles.activeIcon}>🛡️</Text>
               </View>
               <View style={styles.activeCheckinInfo}>
-                <Text style={styles.activeCheckinTitle}>Check-in Active</Text>
-                <Text style={styles.activeCheckinTime}>Started 15 minutes ago</Text>
+                <Text style={styles.activeCheckinTitle}>Monitoring Active</Text>
+                <Text style={styles.activeCheckinTime}>Your location is being shared</Text>
               </View>
             </View>
             <Button
-              title="View Details"
-              onPress={() => navigation.navigate('ActiveCheckin')}
+              title="Return to Active Date"
+              onPress={() => navigation.navigate('DateMode', { checkinId: 'MOCK_ID', partnerName: 'Your Date' })}
               variant="secondary"
               size="medium"
               fullWidth
             />
           </Card>
         ) : (
-          <Card variant="elevated" style={styles.startCheckinCard}>
-            <Text style={styles.startCheckinIcon}>📍</Text>
-            <Text style={styles.startCheckinTitle}>Start a Safety Check-in</Text>
-            <Text style={styles.startCheckinDescription}>
-              Before meeting someone, start a check-in to share your location with emergency contacts
-            </Text>
-            <Button
-              title="Start Check-in"
-              onPress={handleStartCheckin}
-              variant="primary"
-              size="large"
-              fullWidth
-            />
-          </Card>
+          <View style={styles.cardRow}>
+            <Card variant="elevated" style={styles.halfCard}>
+              <Text style={styles.cardEmoji}>🤝</Text>
+              <Text style={styles.cardTitle}>In-Person Date</Text>
+              <Button
+                title="Start Date Mode"
+                onPress={() => {
+                  Alert.alert('Date Mode', 'This enables intensive monitoring for your in-person date.', [
+                    { text: 'Cancel' },
+                    {
+                      text: 'Start', onPress: () => {
+                        setHasActiveCheckin(true);
+                        navigation.navigate('DateMode', { checkinId: 'MOCK_ID', partnerName: 'Your Date' });
+                      }
+                    }
+                  ]);
+                }}
+                variant="primary"
+                size="small"
+              />
+            </Card>
+            <Card variant="elevated" style={styles.halfCard}>
+              <Text style={styles.cardEmoji}>⏰</Text>
+              <Text style={styles.cardTitle}>Solo Check-in</Text>
+              <Button
+                title="Start Timer"
+                onPress={handleStartCheckin}
+                variant="secondary"
+                size="small"
+              />
+            </Card>
+          </View>
         )}
 
         <Text style={styles.sectionTitle}>Safety Features</Text>
@@ -225,28 +245,26 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  startCheckinCard: {
-    alignItems: 'center',
+  cardRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
     marginBottom: SPACING.lg,
   },
-  startCheckinIcon: {
-    fontSize: 48,
-    marginBottom: SPACING.md,
+  halfCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: SPACING.md,
   },
-  startCheckinTitle: {
-    fontSize: 20,
+  cardEmoji: {
+    fontSize: 32,
+    marginBottom: SPACING.sm,
+  },
+  cardTitle: {
+    fontSize: 16,
     fontFamily: FONTS.bold,
     color: COLORS.text,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
     textAlign: 'center',
-  },
-  startCheckinDescription: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-    lineHeight: 20,
   },
   sectionTitle: {
     fontSize: 18,

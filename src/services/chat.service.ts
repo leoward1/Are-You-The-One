@@ -5,11 +5,11 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 class ChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
 
-  async getMessages(
+  async getMessageHistory(
     matchId: string,
     limit: number = 50,
     before?: string
-  ): Promise<PaginatedResponse<Message>> {
+  ): Promise<Message[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -24,19 +24,11 @@ class ChatService {
       query = query.lt('created_at', before);
     }
 
-    const { data: messages, error, count } = await query;
+    const { data: messages, error } = await query;
     if (error) throw new Error(error.message);
 
     // Return messages in chronological order
-    const sorted = (messages || []).reverse();
-
-    return {
-      data: sorted as Message[],
-      total: count || 0,
-      limit,
-      offset: 0,
-      has_more: (messages || []).length === limit,
-    };
+    return (messages || []).reverse() as Message[];
   }
 
   async sendMessage(data: SendMessageData): Promise<Message> {
@@ -67,10 +59,11 @@ class ChatService {
       .from('messages')
       .insert({
         match_id: data.match_id,
-        sender_id: user.id,
+        from_user_id: user.id,
         type: data.type,
         content: data.content || null,
-        media_url: mediaUrl || null,
+        media: mediaUrl || null,
+        game_data: (data as any).game_data || null,
       })
       .select()
       .single();
@@ -81,25 +74,43 @@ class ChatService {
     await supabase
       .from('matches')
       .update({
-        last_message_at: new Date().toISOString(),
-        message_count: undefined, // DB trigger handles this
+        updated_at: new Date().toISOString(),
       })
       .eq('id', data.match_id);
 
     return message as Message;
   }
 
+  async markAsRead(matchId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('match_id', matchId)
+      .neq('from_user_id', user.id)
+      .eq('read', false);
+  }
+
   async shareDateSuggestion(matchId: string, suggestionId: string): Promise<Message> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    const { data: suggestion } = await supabase
+      .from('date_suggestions')
+      .select('*')
+      .eq('id', suggestionId)
+      .single();
 
     const { data: message, error } = await supabase
       .from('messages')
       .insert({
         match_id: matchId,
-        sender_id: user.id,
+        from_user_id: user.id,
         type: 'date_suggestion',
-        content: suggestionId,
+        content: `Suggested: ${suggestion?.name || 'A date idea'}`,
+        date_suggestion: suggestion,
       })
       .select()
       .single();
@@ -109,13 +120,8 @@ class ChatService {
   }
 
   // Realtime: subscribe to new messages in a match
-  subscribeToMessages(matchId: string, onNewMessage: (message: Message) => void): void {
+  subscribeToMessages(matchId: string, onNewMessage: (message: Message) => void): () => void {
     const channelName = `messages:${matchId}`;
-
-    // Unsubscribe if already subscribed
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
-    }
 
     const channel = supabase
       .channel(channelName)
@@ -134,15 +140,11 @@ class ChatService {
       .subscribe();
 
     this.channels.set(channelName, channel);
-  }
 
-  unsubscribeFromMessages(matchId: string): void {
-    const channelName = `messages:${matchId}`;
-    const channel = this.channels.get(channelName);
-    if (channel) {
+    return () => {
       channel.unsubscribe();
       this.channels.delete(channelName);
-    }
+    };
   }
 }
 

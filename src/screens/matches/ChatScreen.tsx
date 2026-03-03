@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,38 +7,141 @@ import { MatchesStackParamList } from '../../navigation/MatchesNavigator';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { MessageBubble, ChatInput } from '../../components/chat';
 import { Avatar } from '../../components/ui';
+import { chatService } from '../../services';
+import { useAuthStore } from '../../store';
+import { Message } from '../../types';
 
 type ChatScreenProps = {
   route: RouteProp<MatchesStackParamList, 'Chat'>;
   navigation: NativeStackNavigationProp<MatchesStackParamList, 'Chat'>;
 };
 
-const MOCK_MESSAGES = [
-  { id: '1', content: 'Hey! How are you?', senderId: 'other', timestamp: new Date().toISOString() },
-  { id: '2', content: 'I am doing great! Just got back from a hike.', senderId: 'me', timestamp: new Date().toISOString() },
-  { id: '3', content: 'That sounds amazing! Where did you go?', senderId: 'other', timestamp: new Date().toISOString() },
-  { id: '4', content: 'Went to the mountains nearby. The view was incredible!', senderId: 'me', timestamp: new Date().toISOString() },
-];
-
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { matchId, matchName } = route.params;
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const { user } = useAuthStore();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
 
-  const handleSend = (content: string) => {
-    const newMessage = {
-      id: Date.now().toString(),
-      content,
-      senderId: 'me',
-      timestamp: new Date().toISOString(),
+  const fetchMessages = useCallback(async () => {
+    try {
+      const history = await chatService.getMessageHistory(matchId);
+      setMessages(history);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [matchId]);
+
+  useEffect(() => {
+    fetchMessages();
+
+    // Subscribe to new messages
+    const unsubscribe = chatService.subscribeToMessages(matchId, (message) => {
+      if (message) {
+        setMessages((prev) => {
+          // Avoid duplicates if we already added it optimistically
+          if (prev.find(m => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      chatService.markAsRead(matchId).catch(console.error);
     };
-    setMessages((prev) => [...prev, newMessage]);
+  }, [matchId, fetchMessages]);
+
+  const handleSend = async (content: string) => {
+    if (!content.trim()) return;
+    try {
+      await chatService.sendMessage({
+        match_id: matchId,
+        type: 'text',
+        content,
+      });
+      // Real-time subscription will update the list
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
-  const renderMessage = ({ item }: { item: typeof MOCK_MESSAGES[0] }) => (
+  const handleDateSuggest = () => {
+    navigation.navigate('DateSuggestions', { matchId });
+  };
+
+  const handleGamePress = async () => {
+    try {
+      await chatService.sendMessage({
+        match_id: matchId,
+        type: 'game',
+        content: 'I started a game of Tic-Tac-Toe!',
+        game_data: {
+          type: 'tictactoe',
+          state: Array(9).fill(null),
+          turn_id: user?.id || '',
+          is_finished: false,
+        },
+      } as any);
+    } catch (error) {
+      console.error('Error starting game:', error);
+    }
+  };
+
+  const handleMove = async (messageId: string, newState: string[]) => {
+    // Logic to determine winner and next turn
+    const winner = checkWinner(newState);
+    const isFinished = !!winner || newState.every(c => c !== null);
+
+    try {
+      await chatService.sendMessage({
+        match_id: matchId,
+        type: 'game',
+        content: winner ? (winner === 'draw' ? "It's a draw!" : "I won!") : "It's your turn!",
+        game_data: {
+          type: 'tictactoe',
+          state: newState,
+          turn_id: 'OTHER_ID', // Swap logic would go here
+          winner_id: winner,
+          is_finished: isFinished,
+        },
+      } as any);
+    } catch (error) {
+      console.error('Error making move:', error);
+    }
+  };
+
+  const checkWinner = (board: string[]) => {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return board[a];
+      }
+    }
+    return board.every(c => c !== null) ? 'draw' : null;
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => (
     <MessageBubble
-      message={item}
-      isOwn={item.senderId === 'me'}
+      message={{
+        id: item.id,
+        content: item.content || '',
+        senderId: item.from_user_id,
+        timestamp: item.created_at,
+        type: item.type as any,
+        date_suggestion: item.date_suggestion,
+        game_data: item.game_data,
+        match_id: item.match_id,
+      }}
+      isOwn={item.from_user_id === user?.id}
+      onMove={(newState) => handleMove(item.id, newState)}
     />
   );
 
@@ -51,7 +154,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         <Avatar name={matchName} size="small" />
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{matchName}</Text>
-          <Text style={styles.headerStatus}>Online</Text>
+          <Text style={styles.headerStatus}>Active</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerAction}>
@@ -63,16 +166,31 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         </View>
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-      />
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
+            </View>
+          }
+        />
+      )}
 
-      <ChatInput onSend={handleSend} />
+      <ChatInput
+        onSend={handleSend}
+        onDateSuggest={handleDateSuggest}
+        onGamePress={handleGamePress}
+      />
     </SafeAreaView>
   );
 }
@@ -126,5 +244,22 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: SPACING.md,
     flexGrow: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xxl,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
 });

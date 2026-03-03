@@ -9,9 +9,10 @@ export const supabaseService = {
       password: data.password,
       options: {
         data: {
-          name: data.name,
-          age: data.age,
+          first_name: data.first_name,
+          last_name: data.last_name,
           gender: data.gender,
+          birthdate: data.birthdate,
           city: data.city,
         },
       },
@@ -75,7 +76,7 @@ export const supabaseService = {
   // Storage methods
   async uploadPhoto(userId: string, file: Blob, fileName: string) {
     const filePath = `${userId}/${fileName}`;
-    
+
     const { data, error } = await supabase.storage
       .from('photos')
       .upload(filePath, file);
