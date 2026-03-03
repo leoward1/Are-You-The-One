@@ -9,13 +9,14 @@ interface MatchState {
   dailyRevealsRemaining: number;
   isLoading: boolean;
   error: string | null;
-  
+
   loadProfiles: () => Promise<void>;
   sendLike: (userId: string, type: LikeType, note?: string) => Promise<Match | null>;
   sendPass: (userId: string) => Promise<void>;
   nextProfile: () => void;
   loadMatches: () => Promise<void>;
   unlockStage: (matchId: string) => Promise<void>;
+  checkAndUpgradeUnlockStage: (match: Match, tier: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -48,13 +49,13 @@ export const useMatchStore = create<MatchState>((set, get) => ({
   sendLike: async (userId, type, note) => {
     try {
       const response = await matchService.sendLike(userId, type, note);
-      
+
       if (response.is_mutual_match && response.match) {
         const { matches } = get();
         set({ matches: [response.match, ...matches] });
         return response.match;
       }
-      
+
       return null;
     } catch (error: any) {
       set({ error: error.message || 'Failed to send like' });
@@ -110,6 +111,20 @@ export const useMatchStore = create<MatchState>((set, get) => ({
         isLoading: false,
       });
       throw error;
+    }
+  },
+
+  checkAndUpgradeUnlockStage: async (match, tier) => {
+    try {
+      const updatedMatch = await matchService.checkAndUpgradeUnlockStage(match, tier);
+      if (updatedMatch.unlocked_stage !== match.unlocked_stage) {
+        const { matches } = get();
+        set({
+          matches: matches.map((m) => (m.id === match.id ? updatedMatch : m)),
+        });
+      }
+    } catch (error: any) {
+      console.error('Failed to auto-upgrade stage:', error);
     }
   },
 

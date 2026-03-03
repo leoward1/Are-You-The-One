@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MatchesStackParamList } from '../../navigation/MatchesNavigator';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { MessageBubble, ChatInput } from '../../components/chat';
-import { Avatar } from '../../components/ui';
+import { Avatar, Button } from '../../components/ui';
 import { chatService } from '../../services';
-import { useAuthStore } from '../../store';
-import { Message } from '../../types';
+import { useAuthStore, useMatchStore } from '../../store';
+import { Message, Match } from '../../types';
 
 type ChatScreenProps = {
   route: RouteProp<MatchesStackParamList, 'Chat'>;
@@ -19,9 +19,20 @@ type ChatScreenProps = {
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { matchId, matchName } = route.params;
   const { user } = useAuthStore();
+  const { matches, checkAndUpgradeUnlockStage } = useMatchStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
+
+  const match = matches.find(m => m.id === matchId);
+  const isVoiceUnlocked = match?.unlocked_stage !== 'text';
+  const isVideoUnlocked = match?.unlocked_stage === 'video';
+
+  useEffect(() => {
+    if (match && user?.tier) {
+      checkAndUpgradeUnlockStage(match, user.tier);
+    }
+  }, [messages.length, user?.tier]);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -157,13 +168,27 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           <Text style={styles.headerStatus}>Active</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerAction}>
-            <Text style={styles.actionIcon}>📞</Text>
+          <TouchableOpacity
+            style={[styles.headerAction, !isVoiceUnlocked && styles.disabledAction]}
+            disabled={!isVoiceUnlocked}
+            onPress={() => !isVoiceUnlocked && Alert.alert('Locked', 'Send 10 messages to unlock Voice calls!')}
+          >
+            <Text style={[styles.actionIcon, !isVoiceUnlocked && styles.disabledText]}>📞</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerAction}>
-            <Text style={styles.actionIcon}>📹</Text>
+          <TouchableOpacity
+            style={[styles.headerAction, !isVideoUnlocked && styles.disabledAction]}
+            disabled={!isVideoUnlocked}
+            onPress={() => !isVideoUnlocked && Alert.alert('Locked', 'Complete 1 voice call to unlock Video calls!')}
+          >
+            <Text style={[styles.actionIcon, !isVideoUnlocked && styles.disabledText]}>📹</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      <View style={styles.stageBadge}>
+        <Text style={styles.stageText}>
+          Level: {match?.unlocked_stage?.toUpperCase() || 'TEXT'}
+        </Text>
       </View>
 
       {isLoading ? (
@@ -250,6 +275,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  stageBadge: {
+    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    alignItems: 'center',
+  },
+  stageText: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    letterSpacing: 1,
+  },
+  disabledAction: {
+    opacity: 0.3,
+  },
+  disabledText: {
+    // No-op for now
   },
   emptyContainer: {
     flex: 1,

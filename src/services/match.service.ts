@@ -1,8 +1,8 @@
 import { supabase } from '@/config/supabase';
-import { 
-  DiscoveryResponse, 
-  Like, 
-  Match, 
+import {
+  DiscoveryResponse,
+  Like,
+  Match,
   LikeType,
   PaginatedResponse,
   Profile
@@ -81,17 +81,17 @@ class MatchService {
       const { data: match, error: matchError } = await supabase
         .from('matches')
         .insert({
-          user1_id: user.id,
-          user2_id: userId,
-          status: 'active',
-          current_stage: 'chat',
+          user_a_id: user.id,
+          user_b_id: userId,
+          status: 'matched',
+          unlocked_stage: 'text',
         })
         .select()
         .single();
 
       if (matchError) throw new Error(matchError.message);
 
-      return { ...like, is_mutual_match: true, match };
+      return { ...like, is_mutual_match: true, match: match as Match };
     }
 
     return { ...like, is_mutual_match: false, match: null };
@@ -121,9 +121,9 @@ class MatchService {
 
     let query = supabase
       .from('matches')
-      .select('*', { count: 'exact' })
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-      .order('last_message_at', { ascending: false, nullsFirst: false })
+      .select('*, message_count:messages(count), voice_call_count:call_sessions(count)', { count: 'exact' })
+      .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
+      .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (status) {
@@ -135,8 +135,8 @@ class MatchService {
 
     // Fetch the other user's profile for each match
     const matchesWithProfiles = await Promise.all(
-      (matches || []).map(async (match: any) => {
-        const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
+      (matches || []).map(async (matchItem: any) => {
+        const otherUserId = matchItem.user_a_id === user.id ? matchItem.user_b_id : matchItem.user_a_id;
         const { data: otherProfile } = await supabase
           .from('profiles')
           .select('*')
@@ -149,9 +149,15 @@ class MatchService {
           .eq('user_id', otherUserId)
           .order('position');
 
+        // Extract counts from the nested objects Supabase returns for counts
+        const msgCount = matchItem.message_count?.[0]?.count || 0;
+        const callCount = matchItem.voice_call_count?.[0]?.count || 0;
+
         return {
-          ...match,
-          other_user: { ...otherProfile, photos: photos || [] },
+          ...matchItem,
+          message_count: msgCount,
+          voice_call_count: callCount,
+          matched_user: { ...otherProfile, photos: photos || [] },
         };
       })
     );
@@ -166,8 +172,8 @@ class MatchService {
   }
 
   async unlockStage(matchId: string): Promise<Match> {
-    const stages = ['chat', 'voice', 'video', 'reveal'];
-    
+    const stages = ['text', 'voice', 'video'];
+
     const { data: match, error: fetchError } = await supabase
       .from('matches')
       .select('*')
@@ -176,18 +182,61 @@ class MatchService {
 
     if (fetchError) throw new Error(fetchError.message);
 
-    const currentIndex = stages.indexOf(match.current_stage);
+    const currentIndex = stages.indexOf(match.unlocked_stage);
     const nextStage = stages[Math.min(currentIndex + 1, stages.length - 1)];
 
     const { data: updated, error } = await supabase
       .from('matches')
-      .update({ current_stage: nextStage, updated_at: new Date().toISOString() })
+      .update({ unlocked_stage: nextStage, updated_at: new Date().toISOString() })
       .eq('id', matchId)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
     return updated as Match;
+  }
+
+  async checkAndUpgradeUnlockStage(match: Match, userTier: string): Promise<Match> {
+    const stages = ['text', 'voice', 'video'];
+    let targetStage = match.unlocked_stage || 'text';
+
+    // Tier based overrides
+    if (userTier === 'pro') {
+      targetStage = 'video';
+    } else if (userTier === 'plus') {
+      if (targetStage === 'text') targetStage = 'voice';
+    }
+
+    // Engagement based upgrades
+    const msgCount = match.message_count || 0;
+    const callCount = match.voice_call_count || 0;
+
+    if (msgCount >= 10 && targetStage === 'text') {
+      targetStage = 'voice';
+    }
+    if (callCount >= 1 && targetStage === 'voice') {
+      targetStage = 'video';
+    }
+
+    if (targetStage !== match.unlocked_stage) {
+      const { data, error } = await supabase
+        .from('matches')
+        .update({
+          unlocked_stage: targetStage,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', match.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error upgrading stage:', error);
+        return match;
+      }
+      return data as Match;
+    }
+
+    return match;
   }
 }
 

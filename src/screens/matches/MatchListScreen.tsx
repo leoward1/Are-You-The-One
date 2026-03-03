@@ -33,10 +33,16 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
               style={styles.matchCard}
               onPress={() => navigation.navigate('Chat', { matchId: item.id })}
             >
-              <Text style={styles.matchName}>
-                {item.matched_user?.first_name || 'Match'}
-              </Text>
-              <Text style={styles.matchStage}>Stage: {item.unlocked_stage}</Text>
+              <View style={styles.matchInfo}>
+                <Text style={styles.matchName}>
+                  {item.matched_user?.first_name || 'Match'}
+                </Text>
+                <View style={styles.badgeContainer}>
+                  <View style={[styles.badge, styles[`badge_${item.unlocked_stage}` as keyof typeof styles] as any]}>
+                    <Text style={styles.badgeText}>{item.unlocked_stage?.toUpperCase()}</Text>
+                  </View>
+                </View>
+              </View>
             </TouchableOpacity>
           )}
         />
@@ -85,8 +91,32 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: SIZES.xs,
   },
-  matchStage: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
+  matchInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+  },
+  badge: {
+    paddingHorizontal: SIZES.sm,
+    paddingVertical: 2,
+    borderRadius: SIZES.sm,
+    backgroundColor: COLORS.border,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  badge_text: {
+    backgroundColor: COLORS.textSecondary,
+  },
+  badge_voice: {
+    backgroundColor: COLORS.primary,
+  },
+  badge_video: {
+    backgroundColor: COLORS.success,
   },
 });
