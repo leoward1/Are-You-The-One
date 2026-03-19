@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, FONTS, SHADOWS, BORDER_RADIUS } from '../../utils/constants';
 import { SwipeCard } from './SwipeCard';
+import type { Gender } from '../../types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ interface SwipeDeckProps {
   onSwipeRight: (profile: Profile) => void;
   onSuperLike?: (profile: Profile) => void;
   onEmpty?: () => void;
+  userGender?: Gender;
 }
 
 export const SwipeDeck: React.FC<SwipeDeckProps> = ({
@@ -35,6 +37,7 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
   onSwipeRight,
   onSuperLike,
   onEmpty,
+  userGender = 'male',
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -59,7 +62,7 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
     }
   }, [currentIndex, profiles, onSuperLike]);
 
-  const handleButtonPress = (action: 'left' | 'right' | 'super') => {
+  const handleButtonPress = (action: 'left' | 'right') => {
     switch (action) {
       case 'left':
         handleSwipeLeft();
@@ -67,11 +70,13 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
       case 'right':
         handleSwipeRight();
         break;
-      case 'super':
-        handleSuperLike();
-        break;
     }
   };
+
+  // Determine right-swipe button label based on user gender
+  const rightButtonEmoji = userGender === 'female' ? '💋' : '🌹';
+  const rightButtonLabel = userGender === 'female' ? 'Kiss' : 'Rose';
+  const rightButtonColor = userGender === 'female' ? COLORS.kiss : COLORS.rose;
 
   if (currentIndex >= profiles.length) {
     return (
@@ -104,30 +109,29 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
               onSwipeRight={handleSwipeRight}
               onSuperLike={handleSuperLike}
               isFirst={index === arr.length - 1}
+              userGender={userGender}
             />
           ))}
       </View>
 
       <View style={styles.buttonsContainer}>
+        {/* Pass button */}
         <TouchableOpacity
           style={[styles.button, styles.passButton]}
           onPress={() => handleButtonPress('left')}
+          activeOpacity={0.7}
         >
-          <Text style={styles.buttonIcon}>✕</Text>
+          <Text style={styles.passIcon}>✕</Text>
         </TouchableOpacity>
 
+        {/* Rose / Kiss button */}
         <TouchableOpacity
-          style={[styles.button, styles.superLikeButton]}
-          onPress={() => handleButtonPress('super')}
-        >
-          <Text style={styles.buttonIcon}>⭐</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, styles.likeButton]}
+          style={[styles.button, styles.likeButton, { backgroundColor: rightButtonColor }]}
           onPress={() => handleButtonPress('right')}
+          activeOpacity={0.7}
         >
-          <Text style={styles.buttonIcon}>❤️</Text>
+          <Text style={styles.likeIcon}>{rightButtonEmoji}</Text>
+          <Text style={styles.likeLabel}>{rightButtonLabel}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -150,34 +154,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: SPACING.lg,
-    gap: SPACING.lg,
+    paddingBottom: SPACING.md,
+    gap: SPACING.xl,
   },
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.medium,
   },
   passButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: COLORS.white,
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: COLORS.error,
   },
-  superLikeButton: {
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.info,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  passIcon: {
+    fontSize: 28,
+    color: COLORS.error,
+    fontFamily: FONTS.bold,
   },
   likeButton: {
-    backgroundColor: COLORS.primary,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    flexDirection: 'column',
+    gap: 2,
   },
-  buttonIcon: {
-    fontSize: 24,
+  likeIcon: {
+    fontSize: 26,
+  },
+  likeLabel: {
+    fontSize: 10,
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+    letterSpacing: 0.5,
   },
   emptyContainer: {
     flex: 1,
@@ -206,7 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.full,
   },
   refreshButtonText: {
     color: COLORS.white,

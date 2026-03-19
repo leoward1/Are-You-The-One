@@ -61,7 +61,7 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.headerEmoji}>🛡️</Text>

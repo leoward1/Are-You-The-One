@@ -67,7 +67,7 @@ export default function DateSuggestionsScreen({ navigation, route }: any) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Date Ideas</Text>
         <Text style={styles.subtitle}>

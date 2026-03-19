@@ -1,6 +1,7 @@
 import React from 'react';
+import { Text, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { COLORS } from '@/utils/constants';
+import { COLORS, FONTS } from '@/utils/constants';
 
 import DiscoveryNavigator from './DiscoveryNavigator';
 import MatchesNavigator from './MatchesNavigator';
@@ -18,6 +19,10 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+const TabIcon = ({ emoji, focused }: { emoji: string; focused: boolean }) => (
+  <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
+);
+
 export default function MainNavigator() {
   return (
     <Tab.Navigator
@@ -25,12 +30,23 @@ export default function MainNavigator() {
         headerShown: false,
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarLabelStyle: {
+          fontFamily: FONTS.medium,
+          fontSize: 11,
+          marginTop: -2,
+        },
         tabBarStyle: {
+          backgroundColor: COLORS.white,
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          paddingBottom: 8,
           paddingTop: 8,
-          height: 60,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+          height: Platform.OS === 'ios' ? 88 : 70,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
         },
       }}
     >
@@ -39,7 +55,7 @@ export default function MainNavigator() {
         component={DiscoveryNavigator}
         options={{
           tabBarLabel: 'Discover',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🔥" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -47,7 +63,7 @@ export default function MainNavigator() {
         component={MatchesNavigator}
         options={{
           tabBarLabel: 'Matches',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💕" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -55,7 +71,7 @@ export default function MainNavigator() {
         component={DatesNavigator}
         options={{
           tabBarLabel: 'Dates',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="📅" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -63,7 +79,7 @@ export default function MainNavigator() {
         component={SafetyNavigator}
         options={{
           tabBarLabel: 'Safety',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🛡️" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -71,7 +87,7 @@ export default function MainNavigator() {
         component={ProfileNavigator}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} />,
         }}
       />
     </Tab.Navigator>

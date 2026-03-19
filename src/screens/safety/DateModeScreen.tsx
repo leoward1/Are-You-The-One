@@ -52,7 +52,7 @@ export default function DateModeScreen({ navigation, route }: any) {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
                 <Text style={styles.dateWith}>Date with {partnerName}</Text>
                 <View style={styles.statusBadge}>

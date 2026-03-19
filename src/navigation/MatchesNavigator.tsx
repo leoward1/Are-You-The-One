@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { FONTS } from '@/utils/constants';
 
 import MatchListScreen from '@/screens/matches/MatchListScreen';
 import ChatScreen from '@/screens/matches/ChatScreen';
@@ -19,7 +20,7 @@ const Stack = createNativeStackNavigator<MatchesStackParamList>();
 
 export default function MatchesNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerTitleStyle: { fontFamily: FONTS.bold } }}>
       <Stack.Screen
         name="MatchList"
         component={MatchListScreen}
@@ -28,7 +29,7 @@ export default function MatchesNavigator() {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        options={{ title: 'Chat' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="DateSuggestions"

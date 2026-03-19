@@ -30,9 +30,11 @@ export default function ActiveCheckinScreen() {
       'Are you sure you want to end this safety check-in?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Complete', onPress: () => {
-          Alert.alert('Success', 'Check-in completed. Stay safe!');
-        }},
+        {
+          text: 'Complete', onPress: () => {
+            Alert.alert('Success', 'Check-in completed. Stay safe!');
+          }
+        },
       ]
     );
   };
@@ -43,9 +45,11 @@ export default function ActiveCheckinScreen() {
       'This will immediately alert your emergency contacts and local authorities. Only use in a real emergency.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'TRIGGER SOS', style: 'destructive', onPress: () => {
-          Alert.alert('SOS Triggered', 'Emergency services have been notified.');
-        }},
+        {
+          text: 'TRIGGER SOS', style: 'destructive', onPress: () => {
+            Alert.alert('SOS Triggered', 'Emergency services have been notified.');
+          }
+        },
       ]
     );
   };
@@ -60,7 +64,7 @@ export default function ActiveCheckinScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Card variant="elevated" style={styles.statusCard}>
           <View style={styles.statusHeader}>

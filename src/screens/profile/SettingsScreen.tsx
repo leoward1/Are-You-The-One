@@ -54,15 +54,17 @@ export default function SettingsScreen() {
       'This action cannot be undone. All your data will be permanently deleted.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => {
-          Alert.alert('Account Deleted', 'Your account has been deleted.');
-        }},
+        {
+          text: 'Delete', style: 'destructive', onPress: () => {
+            Alert.alert('Account Deleted', 'Your account has been deleted.');
+          }
+        },
       ]
     );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionTitle}>Notifications</Text>
         <Card variant="elevated" padding="none">

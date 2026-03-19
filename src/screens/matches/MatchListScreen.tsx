@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MatchesStackParamList } from '@/navigation/MatchesNavigator';
 import { useMatchStore } from '@/store';
@@ -17,7 +18,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Matches</Text>
       {matches.length === 0 ? (
         <View style={styles.empty}>
@@ -47,7 +48,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

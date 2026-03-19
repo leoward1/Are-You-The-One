@@ -49,11 +49,11 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionTitle}>Photos</Text>
         <Text style={styles.sectionSubtitle}>Add at least 3 photos to get more matches</Text>
-        
+
         <View style={styles.photosGrid}>
           {photos.map((photo, index) => (
             <View key={index} style={styles.photoContainer}>
@@ -75,7 +75,7 @@ export default function EditProfileScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>About You</Text>
-        
+
         <Input
           label="Bio"
           placeholder="Tell us about yourself..."
@@ -117,7 +117,7 @@ export default function EditProfileScreen() {
         <Text style={styles.sectionSubtitle}>
           Select up to 10 interests ({selectedInterests.length}/10)
         </Text>
-        
+
         <View style={styles.interestsContainer}>
           {INTERESTS.map((interest) => (
             <TouchableOpacity
