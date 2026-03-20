@@ -7,7 +7,7 @@ interface ChatState {
   unreadCounts: Record<string, number>;
   isLoading: boolean;
   error: string | null;
-  
+
   loadMessages: (matchId: string) => Promise<void>;
   sendMessage: (data: SendMessageData) => Promise<void>;
   addOptimisticMessage: (matchId: string, message: Message) => void;
@@ -25,12 +25,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadMessages: async (matchId) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await chatService.getMessages(matchId);
+      const messages = await chatService.getMessageHistory(matchId);
       const { conversations } = get();
       set({
         conversations: {
           ...conversations,
-          [matchId]: response.data,
+          [matchId]: messages,
         },
         isLoading: false,
       });
@@ -47,7 +47,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const message = await chatService.sendMessage(data);
       const { conversations } = get();
       const matchMessages = conversations[data.match_id] || [];
-      
+
       set({
         conversations: {
           ...conversations,

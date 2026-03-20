@@ -35,6 +35,7 @@ export interface User {
   height?: string;
   anim_enabled: boolean;
   reduce_motion: boolean;
+  is_onboarded: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -117,6 +118,7 @@ export interface GameData {
 export interface CallSession {
   id: string;
   match_id: string;
+  from_user_id: string;
   kind: CallKind;
   started_at: string;
   ended_at?: string;

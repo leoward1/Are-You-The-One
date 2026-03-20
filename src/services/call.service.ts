@@ -27,6 +27,7 @@ class CallService {
                 .insert([
                     {
                         match_id: matchId,
+                        from_user_id: user.id,
                         kind,
                         status: 'ringing',
                         daily_url: roomUrl,

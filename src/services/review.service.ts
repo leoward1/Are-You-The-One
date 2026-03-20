@@ -1,4 +1,4 @@
-import { supabase } from './supabase.service';
+import { supabase } from '../config/supabase';
 import { Review, ApiResponse } from '../types';
 
 class ReviewService {

@@ -7,9 +7,9 @@ import { MatchesStackParamList } from '../../navigation/MatchesNavigator';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { MessageBubble, ChatInput } from '../../components/chat';
 import { Avatar, Button } from '../../components/ui';
-import { chatService } from '../../services';
+import { chatService, callService } from '../../services';
 import { useAuthStore, useMatchStore } from '../../store';
-import { Message, Match } from '../../types';
+import { Message, Match, CallSession } from '../../types';
 
 type ChatScreenProps = {
   route: RouteProp<MatchesStackParamList, 'Chat'>;
@@ -60,8 +60,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     });
 
     // Subscribe to incoming calls
-    const callUnsubscribe = callService.subscribeToCalls(matchId, (session) => {
-      if (session.status === 'ringing' && session.user_a_id !== user?.id) {
+    const callUnsubscribe = callService.subscribeToCalls(matchId, (session: CallSession) => {
+      if (session.status === 'ringing' && session.from_user_id !== user?.id) {
         Alert.alert(
           'Incoming Call',
           `${matchName} is calling you!`,
