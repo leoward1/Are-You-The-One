@@ -1,4 +1,4 @@
-{
+export default {
   "expo": {
     "name": "Are You The One",
     "slug": "are-you-the-one",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
         "NSMicrophoneUsageDescription": "We need microphone access for voice and video calls.",
@@ -52,7 +52,9 @@
     "extra": {
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
-      }
+      },
+      "supabaseUrl": process.env.SUPABASE_URL,
+      "supabaseAnonKey": process.env.SUPABASE_ANON_KEY
     }
   }
-}
+};

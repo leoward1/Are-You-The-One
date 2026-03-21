@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
+import Constants from 'expo-constants';
 
-const supabaseUrl = SUPABASE_URL || '';
-const supabaseAnonKey = SUPABASE_ANON_KEY || '';
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || '';
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL or Anon Key is missing. Please configure them in .env file');
+  console.warn('Supabase URL or Anon Key is missing from Expo Constants. Check app.config.js and EAS environment variables.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
