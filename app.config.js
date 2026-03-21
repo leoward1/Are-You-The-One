@@ -17,7 +17,7 @@ export default {
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
         "NSMicrophoneUsageDescription": "We need microphone access for voice and video calls.",
@@ -53,8 +53,8 @@ export default {
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
       },
-      "supabaseUrl": process.env.SUPABASE_URL,
-      "supabaseAnonKey": process.env.SUPABASE_ANON_KEY
+      "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg"
     }
   }
 };

@@ -220,9 +220,25 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 label="Birthdate"
                 placeholder="YYYY-MM-DD"
                 value={formData.birthdate}
-                onChangeText={(text) => setFormData({ ...formData, birthdate: text })}
+                onChangeText={(text) => {
+                  // Remove non-numeric characters
+                  const cleaned = text.replace(/\D/g, '');
+                  let formatted = cleaned;
+                  
+                  // Add dashes at correct positions
+                  if (cleaned.length > 4) {
+                    formatted = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+                  }
+                  if (cleaned.length > 6) {
+                    formatted = formatted.slice(0, 7) + '-' + cleaned.slice(6, 8);
+                  }
+                  
+                  // Limit length to YYYY-MM-DD (10 characters)
+                  setFormData({ ...formData, birthdate: formatted.slice(0, 10) });
+                }}
                 error={errors.birthdate}
                 hint="You must be 18 or older"
+                keyboardType="numeric"
               />
 
               <Button
