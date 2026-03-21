@@ -4,6 +4,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
@@ -13,9 +17,19 @@ export default function App() {
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
 
   useEffect(() => {
-    loadUser();
-    const unsubscribe = initAuthListener();
-    return () => unsubscribe();
+    async function prepare() {
+      try {
+        await loadUser();
+        initAuthListener();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        // Tell the application to render
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    prepare();
   }, []);
 
   return (

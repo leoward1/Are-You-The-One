@@ -8,7 +8,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "eas-build-pre-install": "echo \"SUPABASE_URL=$SUPABASE_URL\nSUPABASE_ANON_KEY=$SUPABASE_ANON_KEY\nNODE_ENV=$NODE_ENV\" > .env"
   },
   "dependencies": {
     "@daily-co/react-native-daily-js": "^0.83.0",
@@ -28,6 +29,7 @@
     "expo-location": "~19.0.8",
     "expo-notifications": "~0.32.16",
     "expo-secure-store": "~15.0.8",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "lottie-react-native": "^7.3.6",
     "react": "19.1.0",
