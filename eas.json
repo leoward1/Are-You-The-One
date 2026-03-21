@@ -30,8 +30,10 @@
   },
   "submit": {
     "production": {
-      "ascAppId": "6760871449",
-      "appleId": "marquisrichburg@yahoo.com"
+      "ios": {
+        "appleId": "marquisrichburg@yahoo.com",
+        "ascAppId": "6760871449"
+      }
     }
   }
 }
