@@ -17,7 +17,7 @@ export default {
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
         "NSMicrophoneUsageDescription": "We need microphone access for voice and video calls.",
