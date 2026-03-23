@@ -13,9 +13,8 @@ module.exports = function (api) {
           },
         },
       ],
-      // react-native-worklets MUST come before reanimated
-      'react-native-worklets/plugin',
       // react-native-reanimated MUST always be the LAST plugin
+      // Note: react-native-worklets/plugin was removed as it is now built into Reanimated v4
       'react-native-reanimated/plugin',
     ],
   };
