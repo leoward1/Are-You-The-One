@@ -5,31 +5,39 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
-
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
+
+// Keep the native splash screen visible while we load auth state
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const loadUser = useAuthStore((state: any) => state.loadUser);
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
 
   useEffect(() => {
-    async function prepare() {
+    let unsubscribe: (() => void) | undefined;
+
+    const initApp = async () => {
       try {
+        // 1. Load cached user session first — must complete before listener
         await loadUser();
-        initAuthListener();
-      } catch (e) {
-        console.warn(e);
+        // 2. Only start the live auth listener after session is restored
+        unsubscribe = initAuthListener();
+      } catch (error) {
+        console.error('App init error:', error);
       } finally {
-        // Tell the application to render
+        // 3. Hide splash screen only after auth state is resolved
         await SplashScreen.hideAsync();
       }
-    }
+    };
 
-    prepare();
+    initApp();
+
+    // Cleanup listener on unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   return (

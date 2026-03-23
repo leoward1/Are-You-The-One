@@ -1,4 +1,5 @@
 export { authService } from './auth.service';
+export { apiService } from './api';
 export { matchService } from './match.service';
 export { chatService } from './chat.service';
 export { safetyService } from './safety.service';

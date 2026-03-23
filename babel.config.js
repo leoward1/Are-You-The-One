@@ -1,4 +1,4 @@
-module.exports = function(api) {
+module.exports = function (api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
@@ -13,15 +13,9 @@ module.exports = function(api) {
           },
         },
       ],
-      [
-        'module:react-native-dotenv',
-        {
-          moduleName: '@env',
-          path: '.env',
-          safe: false,
-          allowUndefined: true,
-        },
-      ],
+      // react-native-worklets MUST come before reanimated
+      'react-native-worklets/plugin',
+      // react-native-reanimated MUST always be the LAST plugin
       'react-native-reanimated/plugin',
     ],
   };

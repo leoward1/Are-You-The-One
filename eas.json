@@ -5,35 +5,36 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "https://jaspfotwnmjqqwoujnfm.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg"
+      }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "SUPABASE_URL": "https://jaspfotwnmjqqwoujnfm.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg"
       }
     },
     "production": {
-      "distribution": "store",
-      "env": {
-        "SUPABASE_URL": "https://jaspfotwnmjqqwoujnfm.supabase.co",
-        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg",
-        "NODE_ENV": "production"
-      },
       "ios": {
         "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "SUPABASE_URL": "https://jaspfotwnmjqqwoujnfm.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg"
       }
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "marquisrichburg@yahoo.com",
-        "ascAppId": "6760871449"
-      }
-    }
+    "production": {}
   }
 }

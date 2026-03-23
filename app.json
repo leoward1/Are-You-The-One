@@ -1,8 +1,8 @@
-export default {
+{
   "expo": {
     "name": "Are You The One",
     "slug": "are-you-the-one",
-    "version": "1.0.0",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -17,7 +17,6 @@ export default {
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
-      "buildNumber": "6",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
         "NSMicrophoneUsageDescription": "We need microphone access for voice and video calls.",
@@ -46,15 +45,48 @@ export default {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-camera",
-      "expo-location"
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#8B1538",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "We need camera access for profile photos and video intros."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "We need your location for safety check-ins during dates."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#8B1538"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "We need photo library access to upload profile pictures."
+        }
+      ]
     ],
     "extra": {
+      "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg",
+      "apiBaseUrl": "https://api.areyoutheone.app/api/1.1",
+      "laravelApiKey": "",
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
-      },
-      "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg"
+      }
     }
   }
-};
+}

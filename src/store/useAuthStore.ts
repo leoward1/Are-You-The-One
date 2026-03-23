@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User, LoginCredentials, SignupData } from '@/types';
-import { authService } from '@/services';
+import { authService, apiService } from '@/services';
 import { supabase } from '@/config/supabase';
 
 interface AuthState {
@@ -33,6 +33,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
+
+      // Synchronize tokens with apiService
+      if (response.tokens.access_token) {
+        await apiService.setTokens(response.tokens.access_token, response.tokens.refresh_token);
+      }
     } catch (error: any) {
       set({
         error: error.message || 'Login failed',
@@ -51,6 +56,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
+
+      // Synchronize tokens with apiService
+      if (response.tokens.access_token) {
+        await apiService.setTokens(response.tokens.access_token, response.tokens.refresh_token);
+      }
     } catch (error: any) {
       set({
         error: error.message || 'Signup failed',
@@ -127,9 +137,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isLoading: false,
             error: null,
           });
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token refreshed automatically by Supabase
+          // Clear apiService tokens
+          await apiService.clearTokens();
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          // Token refreshed automatically by Supabase, sync with apiService
           console.log('Auth token refreshed');
+          await apiService.setTokens(session.access_token, session.refresh_token || '');
         }
       }
     );
