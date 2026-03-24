@@ -7,11 +7,14 @@ import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 // Keep the native splash screen visible while we load auth state
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  usePushNotifications(); // Register and manage Push Notifications
+  
   const [appIsReady, setAppIsReady] = useState(false);
   const loadUser = useAuthStore((state: any) => state.loadUser);
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
