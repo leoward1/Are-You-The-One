@@ -17,7 +17,6 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
-      "buildNumber": "2",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
         "NSMicrophoneUsageDescription": "We need microphone access for voice and video calls.",
@@ -81,10 +80,8 @@
       ]
     ],
     "extra": {
-      "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg",
-      "apiBaseUrl": "https://api.areyoutheone.app/api/1.1",
-      "laravelApiKey": "",
+      "supabaseUrl": "https://your-project.supabase.co",
+      "supabaseAnonKey": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84",
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
       }

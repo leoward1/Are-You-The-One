@@ -17,7 +17,7 @@ const supabaseUrl: string =
 
 const supabaseAnonKey: string =
   Constants.expoConfig?.extra?.supabaseAnonKey ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphc3Bmb3R3bm1qcXF3b3VqbmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDM3NjMsImV4cCI6MjA1NjA3OTc2M30.JVwCGHVDdGTUKgZMqYCVlXwwzJjXWkMWbPQGQXLTMpg';
+  'sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84';
 
 if (__DEV__) {
   console.log('Supabase URL:', supabaseUrl ? 'loaded' : 'MISSING');
