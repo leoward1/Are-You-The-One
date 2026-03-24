@@ -20,7 +20,7 @@ class CallService {
             // 1. Create a Call Session record in Supabase
             // In a real app, a Supabase hook or Edge Function would create the Daily Room
             // For this MVP, we use a predictable URL (Insecure for production!)
-            const roomUrl = `https://your-domain.daily.co/match_${matchId.substring(0, 8)}`;
+            const roomUrl = `https://areyoutheone.daily.co/match_${matchId.substring(0, 8)}`;
 
             const { data, error } = await supabase
                 .from('call_sessions')

@@ -80,7 +80,7 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                 // 2. If we are joining an existing call (incoming)
                 else {
                     // In a real app, we'd fetch the session to get the URL
-                    const roomUrl = `https://your-domain.daily.co/match_${matchId.substring(0, 8)}`;
+                    const roomUrl = `https://areyoutheone.daily.co/match_${matchId.substring(0, 8)}`;
                     await co.join({
                         url: roomUrl,
                         userName: user?.first_name || 'User',
@@ -136,8 +136,8 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
 
         return (
             <DailyMediaView
-                videoTrack={videoTrack.persistentTrack}
-                audioTrack={participant.tracks.audio.persistentTrack}
+                videoTrack={videoTrack?.persistentTrack || null}
+                audioTrack={participant?.tracks?.audio?.persistentTrack || null}
                 style={isLocal ? styles.localVideo : styles.remoteVideo}
                 objectFit="cover"
                 mirror={isLocal}
