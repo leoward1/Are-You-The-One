@@ -4,8 +4,8 @@ import { ApiError, ApiResponse } from '@/types';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl || 'https://api.areyoutheone.app/api/1.1';
-const API_KEY = Constants.expoConfig?.extra?.laravelApiKey || '';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || Constants.expoConfig?.extra?.apiBaseUrl || 'https://api.areyoutheone.app/api/1.1';
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY || Constants.expoConfig?.extra?.laravelApiKey || '';
 const API_TIMEOUT = 30000;
 
 class ApiService {

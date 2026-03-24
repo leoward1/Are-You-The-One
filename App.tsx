@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,6 +12,7 @@ import { useAuthStore } from './src/store';
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  const [appIsReady, setAppIsReady] = useState(false);
   const loadUser = useAuthStore((state: any) => state.loadUser);
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
 
@@ -27,8 +28,8 @@ export default function App() {
       } catch (error) {
         console.error('App init error:', error);
       } finally {
-        // 3. Hide splash screen only after auth state is resolved
-        await SplashScreen.hideAsync();
+        // 3. Mark app as ready to render the navigation container
+        setAppIsReady(true);
       }
     };
 
@@ -40,10 +41,16 @@ export default function App() {
     };
   }, []);
 
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer onReady={() => {
+          SplashScreen.hideAsync();
+        }}>
           <RootNavigator />
         </NavigationContainer>
         <StatusBar style="auto" />
