@@ -24,7 +24,8 @@
         "NSLocationWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.areyoutheone.app",
