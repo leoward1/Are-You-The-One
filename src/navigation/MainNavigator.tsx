@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { COLORS, FONTS } from '@/utils/constants';
 
@@ -19,9 +19,12 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const TabIcon = ({ emoji, focused }: { emoji: string; focused: boolean }) => (
-  <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
-);
+// FIX: Stable tab icon component with explicit key to prevent iOS 18 re-render crash
+const TabIcon = React.memo(({ emoji, focused }: { emoji: string; focused: boolean }) => (
+  <View style={styles.tabIconContainer}>
+    <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.45 }]}>{emoji}</Text>
+  </View>
+));
 
 export default function MainNavigator() {
   return (
@@ -48,6 +51,9 @@ export default function MainNavigator() {
           shadowOpacity: 0.08,
           shadowRadius: 8,
         },
+        // FIX: Prevent tab re-mounting which causes swipe gesture crashes
+        lazy: false,
+        unmountOnBlur: false,
       }}
     >
       <Tab.Screen
@@ -93,3 +99,15 @@ export default function MainNavigator() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 28,
+  },
+  tabEmoji: {
+    fontSize: 22,
+  },
+});

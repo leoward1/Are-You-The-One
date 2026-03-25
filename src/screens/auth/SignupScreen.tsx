@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -9,6 +18,25 @@ import { Button, Input } from '../../components/ui';
 
 type SignupScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
+};
+
+// FIX: Proper age validation using today's date dynamically
+const calculateAge = (birthdate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthdate);
+  if (isNaN(birth.getTime())) return 0;
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const isValidDate = (dateStr: string): boolean => {
+  if (dateStr.length !== 10) return false;
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
 };
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
@@ -28,7 +56,6 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
-    
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
     if (!formData.email) {
@@ -36,27 +63,39 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     if (!formData.gender) newErrors.gender = 'Please select your gender';
-    if (!formData.birthdate) newErrors.birthdate = 'Birthdate is required';
-    
+
+    // FIX: Full age validation
+    if (!formData.birthdate) {
+      newErrors.birthdate = 'Birthdate is required';
+    } else if (!isValidDate(formData.birthdate)) {
+      newErrors.birthdate = 'Please enter a valid date (YYYY-MM-DD)';
+    } else {
+      const age = calculateAge(formData.birthdate);
+      if (age < 18) {
+        newErrors.birthdate = `You must be 18 or older to join (you are ${age})`;
+      } else if (age > 100) {
+        newErrors.birthdate = 'Please enter a valid birthdate';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -69,7 +108,6 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
 
   const handleSignup = async () => {
     if (!validateStep2()) return;
-    
     try {
       await signup({
         email: formData.email,
@@ -83,6 +121,31 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       navigation.navigate('Onboarding');
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message || 'Please try again');
+    }
+  };
+
+  const handleBirthdateChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 4) {
+      formatted = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+    }
+    if (cleaned.length > 6) {
+      formatted = formatted.slice(0, 7) + '-' + cleaned.slice(6, 8);
+    }
+    setFormData({ ...formData, birthdate: formatted.slice(0, 10) });
+
+    // FIX: Live age feedback as user types
+    if (formatted.length === 10 && isValidDate(formatted)) {
+      const age = calculateAge(formatted);
+      if (age < 18 && age > 0) {
+        setErrors(prev => ({
+          ...prev,
+          birthdate: `You must be 18 or older (you are ${age})`,
+        }));
+      } else {
+        setErrors(prev => ({ ...prev, birthdate: '' }));
+      }
     }
   };
 
@@ -103,7 +166,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             formData.gender === 'male' && styles.genderTextActive,
           ]}>Man</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[
             styles.genderButton,
@@ -220,22 +283,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 label="Birthdate"
                 placeholder="YYYY-MM-DD"
                 value={formData.birthdate}
-                onChangeText={(text) => {
-                  // Remove non-numeric characters
-                  const cleaned = text.replace(/\D/g, '');
-                  let formatted = cleaned;
-                  
-                  // Add dashes at correct positions
-                  if (cleaned.length > 4) {
-                    formatted = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
-                  }
-                  if (cleaned.length > 6) {
-                    formatted = formatted.slice(0, 7) + '-' + cleaned.slice(6, 8);
-                  }
-                  
-                  // Limit length to YYYY-MM-DD (10 characters)
-                  setFormData({ ...formData, birthdate: formatted.slice(0, 10) });
-                }}
+                onChangeText={handleBirthdateChange}
                 error={errors.birthdate}
                 hint="You must be 18 or older"
                 keyboardType="numeric"

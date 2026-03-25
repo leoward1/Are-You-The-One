@@ -17,35 +17,31 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const getBackgroundColor = () => {
     switch (variant) {
-      case 'primary':
-        return COLORS.primary + '20';
-      case 'secondary':
-        return COLORS.secondary + '40';
-      case 'success':
-        return COLORS.success + '20';
-      case 'warning':
-        return COLORS.warning + '20';
-      case 'error':
-        return COLORS.error + '20';
-      case 'info':
-        return COLORS.info + '20';
+      case 'primary': return COLORS.primary;
+      case 'secondary': return '#F0F0F0';
+      case 'success': return COLORS.success + '20';
+      case 'warning': return COLORS.warning + '20';
+      case 'error': return COLORS.error + '20';
+      case 'info': return COLORS.info + '20';
     }
   };
 
   const getTextColor = () => {
     switch (variant) {
-      case 'primary':
-        return COLORS.primary;
-      case 'secondary':
-        return COLORS.text;
-      case 'success':
-        return COLORS.success;
-      case 'warning':
-        return COLORS.warning;
-      case 'error':
-        return COLORS.error;
-      case 'info':
-        return COLORS.info;
+      case 'primary': return COLORS.white;
+      case 'secondary': return COLORS.textSecondary;
+      case 'success': return COLORS.success;
+      case 'warning': return COLORS.warning;
+      case 'error': return COLORS.error;
+      case 'info': return COLORS.info;
+    }
+  };
+
+  const getFontFamily = () => {
+    switch (variant) {
+      case 'primary': return FONTS.bold;
+      case 'secondary': return FONTS.regular;
+      default: return FONTS.medium;
     }
   };
 
@@ -55,6 +51,7 @@ export const Badge: React.FC<BadgeProps> = ({
         styles.badge,
         size === 'small' ? styles.small : styles.medium,
         { backgroundColor: getBackgroundColor() },
+        variant === 'primary' && styles.selectedBorder,
         style,
       ]}
     >
@@ -62,7 +59,7 @@ export const Badge: React.FC<BadgeProps> = ({
         style={[
           styles.text,
           size === 'small' ? styles.smallText : styles.mediumText,
-          { color: getTextColor() },
+          { color: getTextColor(), fontFamily: getFontFamily() },
         ]}
       >
         {label}
@@ -75,6 +72,11 @@ const styles = StyleSheet.create({
   badge: {
     borderRadius: BORDER_RADIUS.full,
     alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  selectedBorder: {
+    borderColor: COLORS.primary,
   },
   small: {
     paddingVertical: 2,
