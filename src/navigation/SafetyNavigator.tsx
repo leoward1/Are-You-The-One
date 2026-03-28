@@ -1,13 +1,13 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import SafetyDashboardScreen from '@/screens/safety/SafetyDashboardScreen';
 import ActiveCheckinScreen from '@/screens/safety/ActiveCheckinScreen';
 import DateModeScreen from '@/screens/safety/DateModeScreen';
 
 export type SafetyStackParamList = {
   SafetyDashboard: undefined;
-  ActiveCheckin: undefined;
+  // FIX: ActiveCheckin now receives checkinId from real Supabase row
+  ActiveCheckin: { checkinId: string };
   DateMode: { checkinId: string; partnerName: string };
 };
 

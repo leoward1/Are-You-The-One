@@ -1,63 +1,119 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafetyStackParamList } from '../../navigation/SafetyNavigator';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Card } from '../../components/ui';
+import { safetyService } from '../../services/safety.service';
+import { useAuthStore } from '../../store/useAuthStore';
 
 type SafetyDashboardScreenProps = {
   navigation: NativeStackNavigationProp<SafetyStackParamList, 'SafetyDashboard'>;
 };
 
 export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScreenProps) {
+  const { user } = useAuthStore();
   const [hasActiveCheckin, setHasActiveCheckin] = useState(false);
+  const [activeCheckinId, setActiveCheckinId] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
 
-  const handleStartCheckin = () => {
+  // FIX: Real 911 emergency call using Linking
+  const handleEmergency = () => {
     Alert.alert(
-      'Start Safety Check-in',
-      'This will share your location with your emergency contacts during your date.',
+      '🚨 Emergency',
+      'This will call 911 immediately. Only use in a real emergency.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Start', onPress: () => {
-            setHasActiveCheckin(true);
-            navigation.navigate('ActiveCheckin');
-          }
+          text: 'CALL 911',
+          style: 'destructive',
+          onPress: () => {
+            Linking.openURL('tel:911').catch(() => {
+              Alert.alert('Error', 'Unable to make the call. Please dial 911 manually.');
+            });
+          },
+        },
+      ]
+    );
+  };
+
+  // FIX: Real Supabase checkin creation
+  const handleStartCheckin = async () => {
+    setIsStarting(true);
+    try {
+      const expectedEnd = new Date();
+      expectedEnd.setHours(expectedEnd.getHours() + 1);
+
+      const checkin = await safetyService.startCheckin({
+        meeting_with: user?.id || '',
+        expected_end: expectedEnd.toISOString(),
+        auto_alert_minutes: 15,
+        emergency_contact_email: user?.settings?.emergency_contact_email || '',
+        emergency_contact_phone: user?.settings?.emergency_contact_phone || '',
+      });
+
+      setActiveCheckinId(checkin.id);
+      setHasActiveCheckin(true);
+      navigation.navigate('ActiveCheckin', { checkinId: checkin.id });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Could not start check-in');
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  // FIX: Real Date Mode with real Supabase checkin
+  const handleStartDateMode = async () => {
+    Alert.alert(
+      'Start Date Mode',
+      'This enables intensive safety monitoring for your in-person date.',
+      [
+        { text: 'Cancel' },
+        {
+          text: 'Start',
+          onPress: async () => {
+            setIsStarting(true);
+            try {
+              const checkin = await safetyService.startDateMode('', 'Your Date');
+              setActiveCheckinId(checkin.id);
+              setHasActiveCheckin(true);
+              navigation.navigate('DateMode', {
+                checkinId: checkin.id,
+                partnerName: 'Your Date',
+              });
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Could not start date mode');
+            } finally {
+              setIsStarting(false);
+            }
+          },
         },
       ]
     );
   };
 
   const safetyFeatures = [
-    {
-      icon: '📍',
-      title: 'Live Location Sharing',
-      description: 'Share your real-time location with trusted contacts',
-    },
-    {
-      icon: '⏰',
-      title: 'Timed Check-ins',
-      description: 'Set automatic check-in reminders during dates',
-    },
-    {
-      icon: '🚨',
-      title: 'Emergency SOS',
-      description: 'Quick access to emergency services',
-    },
-    {
-      icon: '👥',
-      title: 'Trusted Contacts',
-      description: 'Designate friends and family as emergency contacts',
-    },
+    { icon: '📍', title: 'Live Location Sharing', description: 'Share your real-time location with trusted contacts' },
+    { icon: '⏰', title: 'Timed Check-ins', description: 'Set automatic check-in reminders during dates' },
+    { icon: '🚨', title: 'Emergency SOS', description: 'Quick access to emergency services' },
+    { icon: '👥', title: 'Trusted Contacts', description: 'Designate friends and family as emergency contacts' },
   ];
 
   const safetyTips = [
     'Always meet in a public place for first dates',
-    'Tell a friend where you\'re going and when',
-    'Trust your instincts - if something feels off, leave',
+    "Tell a friend where you're going and when",
+    'Trust your instincts — if something feels off, leave',
     'Keep your phone charged and accessible',
-    'Don\'t share personal information too quickly',
+    "Don't share personal information too quickly",
   ];
 
   return (
@@ -83,7 +139,10 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
             </View>
             <Button
               title="Return to Active Date"
-              onPress={() => navigation.navigate('DateMode', { checkinId: 'MOCK_ID', partnerName: 'Your Date' })}
+              onPress={() => navigation.navigate('DateMode', {
+                checkinId: activeCheckinId || '',
+                partnerName: 'Your Date',
+              })}
               variant="secondary"
               size="medium"
               fullWidth
@@ -95,30 +154,22 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
               <Text style={styles.cardEmoji}>🤝</Text>
               <Text style={styles.cardTitle}>In-Person Date</Text>
               <Button
-                title="Start Date Mode"
-                onPress={() => {
-                  Alert.alert('Date Mode', 'This enables intensive monitoring for your in-person date.', [
-                    { text: 'Cancel' },
-                    {
-                      text: 'Start', onPress: () => {
-                        setHasActiveCheckin(true);
-                        navigation.navigate('DateMode', { checkinId: 'MOCK_ID', partnerName: 'Your Date' });
-                      }
-                    }
-                  ]);
-                }}
+                title={isStarting ? 'Starting...' : 'Start Date Mode'}
+                onPress={handleStartDateMode}
                 variant="primary"
                 size="small"
+                disabled={isStarting}
               />
             </Card>
             <Card variant="elevated" style={styles.halfCard}>
               <Text style={styles.cardEmoji}>⏰</Text>
               <Text style={styles.cardTitle}>Solo Check-in</Text>
               <Button
-                title="Start Timer"
+                title={isStarting ? 'Starting...' : 'Start Timer'}
                 onPress={handleStartCheckin}
                 variant="secondary"
                 size="small"
+                disabled={isStarting}
               />
             </Card>
           </View>
@@ -150,6 +201,7 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
           ))}
         </Card>
 
+        {/* FIX: Real 911 call */}
         <Card variant="outlined" style={styles.emergencyCard}>
           <Text style={styles.emergencyIcon}>🚨</Text>
           <Text style={styles.emergencyTitle}>In an Emergency</Text>
@@ -157,8 +209,8 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
             If you feel unsafe, leave immediately and call emergency services
           </Text>
           <Button
-            title="Emergency: 911"
-            onPress={() => Alert.alert('Emergency', 'This would dial 911')}
+            title="Emergency: Call 911"
+            onPress={handleEmergency}
             variant="primary"
             size="large"
             fullWidth
@@ -171,177 +223,37 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  headerEmoji: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: FONTS.bold,
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  activeCheckinCard: {
-    marginBottom: SPACING.lg,
-    backgroundColor: COLORS.success + '10',
-    borderColor: COLORS.success,
-  },
-  activeCheckinHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  pulseContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-    position: 'relative',
-  },
-  pulse: {
-    position: 'absolute',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.success,
-    opacity: 0.3,
-  },
-  activeIcon: {
-    fontSize: 24,
-    color: COLORS.white,
-  },
-  activeCheckinInfo: {
-    flex: 1,
-  },
-  activeCheckinTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.success,
-  },
-  activeCheckinTime: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  halfCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: SPACING.md,
-  },
-  cardEmoji: {
-    fontSize: 32,
-    marginBottom: SPACING.sm,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontFamily: FONTS.bold,
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.text,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  featureIcon: {
-    fontSize: 32,
-    marginRight: SPACING.md,
-  },
-  featureContent: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontFamily: FONTS.semiBold,
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  featureDescription: {
-    fontSize: 13,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginLeft: SPACING.md + 32 + SPACING.md,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    marginBottom: SPACING.sm,
-  },
-  tipBullet: {
-    fontSize: 16,
-    color: COLORS.primary,
-    marginRight: SPACING.sm,
-    fontFamily: FONTS.bold,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.text,
-    lineHeight: 20,
-  },
-  emergencyCard: {
-    marginTop: SPACING.lg,
-    alignItems: 'center',
-    borderColor: COLORS.error,
-    backgroundColor: COLORS.error + '05',
-  },
-  emergencyIcon: {
-    fontSize: 48,
-    marginBottom: SPACING.sm,
-  },
-  emergencyTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.error,
-    marginBottom: SPACING.xs,
-  },
-  emergencyText: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.md,
-  },
-  emergencyButton: {
-    backgroundColor: COLORS.error,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  header: { alignItems: 'center', marginBottom: SPACING.xl },
+  headerEmoji: { fontSize: 64, marginBottom: SPACING.md },
+  title: { fontSize: 28, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.xs },
+  subtitle: { fontSize: 16, fontFamily: FONTS.regular, color: COLORS.textSecondary, textAlign: 'center' },
+  activeCheckinCard: { marginBottom: SPACING.lg, backgroundColor: COLORS.success + '10', borderColor: COLORS.success },
+  activeCheckinHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
+  pulseContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.success, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md, position: 'relative' },
+  pulse: { position: 'absolute', width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.success, opacity: 0.3 },
+  activeIcon: { fontSize: 24, color: COLORS.white },
+  activeCheckinInfo: { flex: 1 },
+  activeCheckinTitle: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.success },
+  activeCheckinTime: { fontSize: 14, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginTop: 2 },
+  cardRow: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.lg },
+  halfCard: { flex: 1, alignItems: 'center', padding: SPACING.md },
+  cardEmoji: { fontSize: 32, marginBottom: SPACING.sm },
+  cardTitle: { fontSize: 16, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.md, textAlign: 'center' },
+  sectionTitle: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.text, marginTop: SPACING.lg, marginBottom: SPACING.md },
+  featureItem: { flexDirection: 'row', padding: SPACING.md, alignItems: 'center' },
+  featureIcon: { fontSize: 32, marginRight: SPACING.md },
+  featureContent: { flex: 1 },
+  featureTitle: { fontSize: 16, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: 2 },
+  featureDescription: { fontSize: 13, fontFamily: FONTS.regular, color: COLORS.textSecondary },
+  divider: { height: 1, backgroundColor: COLORS.border, marginLeft: SPACING.md + 32 + SPACING.md },
+  tipItem: { flexDirection: 'row', marginBottom: SPACING.sm },
+  tipBullet: { fontSize: 16, color: COLORS.primary, marginRight: SPACING.sm, fontFamily: FONTS.bold },
+  tipText: { flex: 1, fontSize: 14, fontFamily: FONTS.regular, color: COLORS.text, lineHeight: 20 },
+  emergencyCard: { marginTop: SPACING.lg, alignItems: 'center', borderColor: COLORS.error, backgroundColor: COLORS.error + '05' },
+  emergencyIcon: { fontSize: 48, marginBottom: SPACING.sm },
+  emergencyTitle: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.error, marginBottom: SPACING.xs },
+  emergencyText: { fontSize: 14, fontFamily: FONTS.regular, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
+  emergencyButton: { backgroundColor: COLORS.error },
 });

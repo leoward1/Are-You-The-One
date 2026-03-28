@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
+import { supabaseService } from '../../services/supabase.service';
+import { supabase } from '../../config/supabase';
 
 export default function EditProfileScreen() {
-  const { user } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
     bio: user?.bio || '',
     city: user?.city || '',
@@ -14,15 +25,85 @@ export default function EditProfileScreen() {
     height: user?.height || '',
   });
   const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.interests || []);
-  const [photos, setPhotos] = useState<string[]>(user?.photos?.map(p => p.url) || []);
+  const [photos, setPhotos] = useState<string[]>(
+    user?.photos?.map((p: any) => typeof p === 'string' ? p : p.url).filter(Boolean) || []
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const handleAddPhoto = () => {
-    Alert.alert('Add Photo', 'Photo picker will be implemented here');
+  // FIX: Real device photo picker + upload to Supabase storage
+  const handleAddPhoto = async () => {
+    if (photos.length >= 6) {
+      Alert.alert('Limit reached', 'You can add a maximum of 6 photos.');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission needed',
+        'Please allow access to your photo library in Settings.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      setIsUploadingPhoto(true);
+
+      try {
+        // Convert to blob for upload
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        const fileName = `photo_${Date.now()}.jpg`;
+
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) throw new Error('Not authenticated');
+
+        // Upload to Supabase storage
+        const publicUrl = await supabaseService.uploadPhoto(authUser.id, blob, fileName);
+
+        // Save photo record to photos table
+        await supabase.from('photos').insert({
+          user_id: authUser.id,
+          url: publicUrl,
+          is_primary: photos.length === 0,
+        });
+
+        // Update primary_photo on profile if this is the first photo
+        if (photos.length === 0) {
+          await supabase.from('profiles')
+            .update({ primary_photo: publicUrl, photo_url: publicUrl })
+            .eq('id', authUser.id);
+        }
+
+        setPhotos(prev => [...prev, publicUrl]);
+        Alert.alert('Success', 'Photo uploaded successfully!');
+      } catch (error: any) {
+        Alert.alert('Upload failed', error.message || 'Could not upload photo');
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    }
   };
 
-  const handleRemovePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
+  const handleRemovePhoto = async (index: number) => {
+    const photoUrl = photos[index];
+    try {
+      setPhotos(photos.filter((_, i) => i !== index));
+      // Remove from Supabase photos table
+      await supabase.from('photos').delete().eq('url', photoUrl);
+    } catch (error) {
+      console.error('Error removing photo:', error);
+    }
   };
 
   const toggleInterest = (interest: string) => {
@@ -35,14 +116,20 @@ export default function EditProfileScreen() {
     }
   };
 
+  // FIX: Real Supabase profile update
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await updateProfile({
+        bio: formData.bio,
+        city: formData.city,
+        occupation: formData.occupation,
+        height: formData.height,
+        interests: selectedInterests,
+      });
       Alert.alert('Success', 'Profile updated successfully!');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update profile');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -67,9 +154,15 @@ export default function EditProfileScreen() {
             </View>
           ))}
           {photos.length < 6 && (
-            <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
-              <Text style={styles.addPhotoIcon}>+</Text>
-              <Text style={styles.addPhotoText}>Add Photo</Text>
+            <TouchableOpacity
+              style={styles.addPhotoButton}
+              onPress={handleAddPhoto}
+              disabled={isUploadingPhoto}
+            >
+              <Text style={styles.addPhotoIcon}>{isUploadingPhoto ? '⏳' : '+'}</Text>
+              <Text style={styles.addPhotoText}>
+                {isUploadingPhoto ? 'Uploading...' : 'Add Photo'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -120,10 +213,7 @@ export default function EditProfileScreen() {
 
         <View style={styles.interestsContainer}>
           {INTERESTS.map((interest) => (
-            <TouchableOpacity
-              key={interest}
-              onPress={() => toggleInterest(interest)}
-            >
+            <TouchableOpacity key={interest} onPress={() => toggleInterest(interest)}>
               <Badge
                 label={interest}
                 variant={selectedInterests.includes(interest) ? 'primary' : 'secondary'}
@@ -148,95 +238,20 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: FONTS.bold,
-    color: COLORS.text,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.xs,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  },
-  photosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  photoContainer: {
-    width: 100,
-    height: 140,
-    position: 'relative',
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.surface,
-  },
-  removePhotoButton: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removePhotoText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontFamily: FONTS.bold,
-  },
-  addPhotoButton: {
-    width: 100,
-    height: 140,
-    borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.surface,
-  },
-  addPhotoIcon: {
-    fontSize: 32,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  addPhotoText: {
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  saveButton: {
-    marginTop: SPACING.lg,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  sectionTitle: { fontSize: 20, fontFamily: FONTS.bold, color: COLORS.text, marginTop: SPACING.lg, marginBottom: SPACING.xs },
+  sectionSubtitle: { fontSize: 14, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginBottom: SPACING.md },
+  photosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, marginBottom: SPACING.lg },
+  photoContainer: { width: 100, height: 140, position: 'relative' },
+  photo: { width: '100%', height: '100%', borderRadius: BORDER_RADIUS.lg, backgroundColor: COLORS.surface },
+  removePhotoButton: { position: 'absolute', top: 4, right: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.error, alignItems: 'center', justifyContent: 'center' },
+  removePhotoText: { color: COLORS.white, fontSize: 14, fontFamily: FONTS.bold },
+  addPhotoButton: { width: 100, height: 140, borderRadius: BORDER_RADIUS.lg, borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface },
+  addPhotoIcon: { fontSize: 32, color: COLORS.textSecondary, marginBottom: SPACING.xs },
+  addPhotoText: { fontSize: 12, fontFamily: FONTS.medium, color: COLORS.textSecondary },
+  row: { flexDirection: 'row', gap: SPACING.md },
+  halfWidth: { flex: 1 },
+  interestsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg },
+  saveButton: { marginTop: SPACING.lg },
 });

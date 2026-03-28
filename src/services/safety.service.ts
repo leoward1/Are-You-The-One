@@ -102,6 +102,21 @@ class SafetyService {
     if (error) throw new Error(error.message);
     return checkin as SafetyCheckin;
   }
+
+  async extendCheckin(checkinId: string, newEndTime: string): Promise<SafetyCheckin> {
+    const { data: checkin, error } = await supabase
+      .from('safety_checkins')
+      .update({
+        expected_end: newEndTime,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', checkinId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return checkin as SafetyCheckin;
+  }
 }
 
 export const safetyService = new SafetyService();

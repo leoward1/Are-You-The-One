@@ -36,6 +36,8 @@ export interface User {
   anim_enabled: boolean;
   reduce_motion: boolean;
   is_onboarded: boolean;
+  settings?: any;
+  preferences?: any;
   created_at: string;
   updated_at: string;
 }

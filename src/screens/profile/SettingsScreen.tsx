@@ -5,7 +5,14 @@ import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
 
-export default function SettingsScreen() {
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
+
+type SettingsScreenProps = {
+  navigation: NativeStackNavigationProp<ProfileStackParamList, 'Settings'>;
+};
+
+export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { logout } = useAuthStore();
   const [settings, setSettings] = useState({
     notifications: {
@@ -55,9 +62,11 @@ export default function SettingsScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete', style: 'destructive', onPress: () => {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
             Alert.alert('Account Deleted', 'Your account has been deleted.');
-          }
+          },
         },
       ]
     );
@@ -137,22 +146,34 @@ export default function SettingsScreen() {
 
         <Text style={styles.sectionTitle}>Account</Text>
         <Card variant="elevated" padding="none">
-          <TouchableOpacity style={styles.settingButton}>
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => navigation.navigate('BlockedUsers')}
+          >
             <Text style={styles.settingButtonText}>Blocked Users</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.settingButton}>
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => navigation.navigate('HelpSupport')}
+          >
             <Text style={styles.settingButtonText}>Help & Support</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.settingButton}>
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => navigation.navigate('TermsOfService')}
+          >
             <Text style={styles.settingButtonText}>Terms of Service</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.settingButton}>
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
             <Text style={styles.settingButtonText}>Privacy Policy</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>

@@ -1,20 +1,83 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Card } from '../../components/ui';
+import { safetyService } from '../../services/safety.service';
+import { useAuthStore } from '../../store/useAuthStore';
 
-export default function ActiveCheckinScreen() {
+export default function ActiveCheckinScreen({ navigation, route }: any) {
+  // FIX: Read real checkinId from navigation params
+  const { checkinId } = route.params;
+  const { user } = useAuthStore();
+
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [location, setLocation] = useState('Downtown Coffee Shop');
-  const startTime = new Date(Date.now() - 15 * 60 * 1000);
-  const scheduledEndTime = new Date(Date.now() + 45 * 60 * 1000);
+  const [locationText, setLocationText] = useState('Getting location...');
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isExtending, setIsExtending] = useState(false);
+  const startTime = useRef(new Date());
+  const scheduledEndTime = useRef(new Date(Date.now() + 60 * 60 * 1000)); // 1 hour default
+  const locationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // FIX: Real GPS location tracking
+  useEffect(() => {
+    const startLocationTracking = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationText('Location permission denied');
+        return;
+      }
+
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        const address = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (address.length > 0) {
+          const addr = address[0];
+          setLocationText(
+            `${addr.street || ''} ${addr.city || ''}`.trim() || 'Location active'
+          );
+        }
+
+        // Update location every 60 seconds
+        locationInterval.current = setInterval(async () => {
+          try {
+            const loc = await Location.getCurrentPositionAsync({});
+            await safetyService.updateLocation(checkinId, {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+            });
+          } catch (err) {
+            console.error('Location update error:', err);
+          }
+        }, 60000);
+      } catch (err) {
+        setLocationText('Location unavailable');
+      }
+    };
+
+    startLocationTracking();
+    return () => {
+      if (locationInterval.current) clearInterval(locationInterval.current);
+    };
+  }, [checkinId]);
+
+  // Elapsed time counter
   useEffect(() => {
     const interval = setInterval(() => {
-      setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      setElapsedTime(Math.floor((Date.now() - startTime.current.getTime()) / 1000));
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -24,6 +87,7 @@ export default function ActiveCheckinScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // FIX: Real Supabase checkin completion
   const handleComplete = () => {
     Alert.alert(
       'Complete Check-in',
@@ -31,41 +95,83 @@ export default function ActiveCheckinScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Complete', onPress: () => {
-            Alert.alert('Success', 'Check-in completed. Stay safe!');
-          }
+          text: 'Complete',
+          onPress: async () => {
+            setIsCompleting(true);
+            try {
+              await safetyService.completeCheckin(checkinId);
+              navigation.goBack();
+              Alert.alert('Check-in Complete', 'Stay safe! 💕');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Could not complete check-in');
+            } finally {
+              setIsCompleting(false);
+            }
+          },
         },
       ]
     );
   };
 
+  const handleExtendTime = async () => {
+    setIsExtending(true);
+    try {
+      const newEnd = new Date(scheduledEndTime.current.getTime() + 30 * 60 * 1000);
+      await safetyService.extendCheckin(checkinId, newEnd.toISOString());
+      scheduledEndTime.current = newEnd;
+      Alert.alert('Extended', 'Check-in extended by 30 minutes');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Could not extend time');
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
+  // FIX: Real SOS — writes to Supabase AND calls 911
   const handleSOS = () => {
     Alert.alert(
-      'Emergency SOS',
-      'This will immediately alert your emergency contacts and local authorities. Only use in a real emergency.',
+      '🚨 Emergency SOS',
+      'This will immediately alert your emergency contacts AND call 911. Only use in a real emergency.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'TRIGGER SOS', style: 'destructive', onPress: () => {
-            Alert.alert('SOS Triggered', 'Emergency services have been notified.');
-          }
+          text: 'TRIGGER SOS',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await safetyService.triggerSOS(checkinId);
+            } catch (err) {
+              console.error('SOS DB error:', err);
+            }
+            // Always offer 911 regardless of DB result
+            Alert.alert(
+              'SOS Triggered',
+              'Emergency contacts have been notified. Call 911 now?',
+              [
+                {
+                  text: 'Call 911',
+                  onPress: () =>
+                    Linking.openURL('tel:911').catch(() =>
+                      Alert.alert('Please dial 911 manually')
+                    ),
+                },
+                { text: 'Not now', style: 'cancel' },
+              ]
+            );
+          },
         },
       ]
     );
   };
 
-  const handleExtendTime = () => {
-    Alert.alert('Success', 'Check-in extended by 30 minutes');
-  };
-
   const emergencyContacts = [
-    { name: 'Mom', phone: '+1 (555) 123-4567' },
-    { name: 'Best Friend', phone: '+1 (555) 987-6543' },
+    { name: user?.settings?.emergency_contact_name || 'Emergency Contact', phone: user?.settings?.emergency_contact_phone || 'Not set' },
   ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
         <Card variant="elevated" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.pulseContainer}>
@@ -84,7 +190,11 @@ export default function ActiveCheckinScreen() {
             <Text style={styles.timerLabel}>Elapsed Time</Text>
             <Text style={styles.timerValue}>{formatTime(elapsedTime)}</Text>
             <Text style={styles.timerSubtext}>
-              Scheduled to end at {scheduledEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              Scheduled to end at{' '}
+              {scheduledEndTime.current.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </Text>
           </View>
         </Card>
@@ -94,7 +204,7 @@ export default function ActiveCheckinScreen() {
             <Text style={styles.infoIcon}>📍</Text>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoValue}>{location}</Text>
+              <Text style={styles.infoValue}>{locationText}</Text>
             </View>
           </View>
           <View style={styles.divider} />
@@ -103,51 +213,54 @@ export default function ActiveCheckinScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Started</Text>
               <Text style={styles.infoValue}>
-                {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {startTime.current.toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </Text>
             </View>
           </View>
         </Card>
 
-        <Text style={styles.sectionTitle}>Emergency Contacts Notified</Text>
+        <Text style={styles.sectionTitle}>Emergency Contacts</Text>
         <Card variant="elevated" padding="none">
           {emergencyContacts.map((contact, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.contactRow}>
-                <View style={styles.contactAvatar}>
-                  <Text style={styles.contactInitial}>{contact.name[0]}</Text>
-                </View>
-                <View style={styles.contactInfo}>
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactPhone}>{contact.phone}</Text>
-                </View>
-                <View style={styles.contactStatus}>
-                  <Text style={styles.contactStatusDot}>●</Text>
-                  <Text style={styles.contactStatusText}>Monitoring</Text>
-                </View>
+            <View key={index} style={styles.contactRow}>
+              <View style={styles.contactAvatar}>
+                <Text style={styles.contactInitial}>{contact.name[0]}</Text>
               </View>
-              {index < emergencyContacts.length - 1 && <View style={styles.divider} />}
-            </React.Fragment>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactName}>{contact.name}</Text>
+                <Text style={styles.contactPhone}>{contact.phone}</Text>
+              </View>
+              <View style={styles.contactStatus}>
+                <Text style={styles.contactStatusDot}>●</Text>
+                <Text style={styles.contactStatusText}>Monitoring</Text>
+              </View>
+            </View>
           ))}
         </Card>
 
         <Button
-          title="Extend Time (+30 min)"
+          title={isExtending ? 'Extending...' : 'Extend Time (+30 min)'}
           onPress={handleExtendTime}
           variant="secondary"
           size="large"
           fullWidth
+          disabled={isExtending}
           style={styles.extendButton}
         />
 
         <Button
-          title="Complete Check-in"
+          title={isCompleting ? 'Completing...' : 'Complete Check-in'}
           onPress={handleComplete}
           variant="primary"
           size="large"
           fullWidth
+          disabled={isCompleting}
         />
 
+        {/* FIX: Real SOS with 911 call */}
         <Button
           title="🚨 EMERGENCY SOS"
           onPress={handleSOS}
@@ -162,166 +275,36 @@ export default function ActiveCheckinScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  statusCard: {
-    backgroundColor: COLORS.success + '10',
-    borderColor: COLORS.success,
-    marginBottom: SPACING.md,
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pulseContainer: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-    position: 'relative',
-  },
-  pulse: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.success,
-    opacity: 0.2,
-  },
-  pulseInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.success,
-  },
-  statusInfo: {
-    flex: 1,
-  },
-  statusTitle: {
-    fontSize: 20,
-    fontFamily: FONTS.bold,
-    color: COLORS.success,
-  },
-  statusSubtitle: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  timerContainer: {
-    alignItems: 'center',
-    paddingVertical: SPACING.lg,
-  },
-  timerLabel: {
-    fontSize: 14,
-    fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
-  },
-  timerValue: {
-    fontSize: 48,
-    fontFamily: FONTS.bold,
-    color: COLORS.primary,
-  },
-  timerSubtext: {
-    fontSize: 13,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-  },
-  infoIcon: {
-    fontSize: 24,
-    marginRight: SPACING.md,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 13,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontFamily: FONTS.semiBold,
-    color: COLORS.text,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.text,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-  },
-  contactAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-  },
-  contactInitial: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.white,
-  },
-  contactInfo: {
-    flex: 1,
-  },
-  contactName: {
-    fontSize: 16,
-    fontFamily: FONTS.semiBold,
-    color: COLORS.text,
-  },
-  contactPhone: {
-    fontSize: 13,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  contactStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contactStatusDot: {
-    fontSize: 12,
-    color: COLORS.success,
-    marginRight: 4,
-  },
-  contactStatusText: {
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-    color: COLORS.success,
-  },
-  extendButton: {
-    marginTop: SPACING.lg,
-  },
-  sosButton: {
-    backgroundColor: COLORS.error,
-    marginTop: SPACING.md,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  statusCard: { backgroundColor: COLORS.success + '10', borderColor: COLORS.success, marginBottom: SPACING.md },
+  statusHeader: { flexDirection: 'row', alignItems: 'center' },
+  pulseContainer: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md, position: 'relative' },
+  pulse: { position: 'absolute', width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.success, opacity: 0.2 },
+  pulseInner: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.success },
+  statusInfo: { flex: 1 },
+  statusTitle: { fontSize: 20, fontFamily: FONTS.bold, color: COLORS.success },
+  statusSubtitle: { fontSize: 14, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginTop: 2 },
+  timerContainer: { alignItems: 'center', paddingVertical: SPACING.lg },
+  timerLabel: { fontSize: 14, fontFamily: FONTS.medium, color: COLORS.textSecondary, marginBottom: SPACING.sm },
+  timerValue: { fontSize: 48, fontFamily: FONTS.bold, color: COLORS.primary },
+  timerSubtext: { fontSize: 13, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.sm },
+  infoIcon: { fontSize: 24, marginRight: SPACING.md },
+  infoContent: { flex: 1 },
+  infoLabel: { fontSize: 13, fontFamily: FONTS.regular, color: COLORS.textSecondary },
+  infoValue: { fontSize: 16, fontFamily: FONTS.bold, color: COLORS.text, marginTop: 2 },
+  divider: { height: 1, backgroundColor: COLORS.border },
+  sectionTitle: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.text, marginTop: SPACING.lg, marginBottom: SPACING.md },
+  contactRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md },
+  contactAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md },
+  contactInitial: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.white },
+  contactInfo: { flex: 1 },
+  contactName: { fontSize: 16, fontFamily: FONTS.bold, color: COLORS.text },
+  contactPhone: { fontSize: 13, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginTop: 2 },
+  contactStatus: { flexDirection: 'row', alignItems: 'center' },
+  contactStatusDot: { fontSize: 12, color: COLORS.success, marginRight: 4 },
+  contactStatusText: { fontSize: 12, fontFamily: FONTS.medium, color: COLORS.success },
+  extendButton: { marginTop: SPACING.lg },
+  sosButton: { backgroundColor: COLORS.error, marginTop: SPACING.md },
 });

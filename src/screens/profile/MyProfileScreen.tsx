@@ -108,7 +108,10 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
           </Card>
 
           <Card variant="elevated" padding="none" style={styles.extraMenu}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => navigation.navigate('SafetyTab' as any)}
+            >
               <View style={styles.menuIcon}>
                 <Text style={styles.menuEmoji}>🛡️</Text>
               </View>
@@ -121,7 +124,10 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => navigation.navigate('HelpSupport')}
+            >
               <View style={styles.menuIcon}>
                 <Text style={styles.menuEmoji}>❓</Text>
               </View>
