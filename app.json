@@ -2,6 +2,7 @@
   "expo": {
     "name": "Are You The One",
     "slug": "are-you-the-one",
+    "scheme": "areyoutheone",
     "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,7 +26,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "11"
+      "buildNumber": "12"
     },
     "android": {
       "package": "com.areyoutheone.app",
@@ -50,8 +51,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#8B1538",
-          "image": "./assets/splash.png",
-          "imageWidth": 200
+          "image": "./assets/splash.png"
         }
       ],
       "expo-secure-store",
@@ -78,13 +78,15 @@
         {
           "photosPermission": "We need photo library access to upload profile pictures."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
       "supabaseAnonKey": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84",
       "apiBaseUrl": "https://api.areyoutheone.app/api/1.1",
       "laravelApiKey": "",
+      "segmentWriteKey": "SEGMENT_WRITE_KEY_HERE",
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
       }

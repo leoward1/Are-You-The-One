@@ -7,9 +7,10 @@ import AddReviewScreen from '@/screens/matches/AddReviewScreen';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
-  Chat: { matchId: string };
-  Call: { matchId: string; kind: 'voice' | 'video' };
-  AddReview: { matchId: string };
+  Chat: { matchId: string; matchName?: string };
+  Call: { matchId: string; partnerName?: string; callType: 'voice' | 'video'; sessionId?: string };
+  AddReview: { matchId: string; partnerName?: string };
+  DateSuggestions: { matchId: string };
 };
 
 const Stack = createNativeStackNavigator<MatchesStackParamList>();

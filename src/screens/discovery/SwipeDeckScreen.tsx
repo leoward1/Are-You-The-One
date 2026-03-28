@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, FONTS } from '../../utils/constants';
@@ -11,9 +12,10 @@ import { SwipeDeck, SwipeAnimationOverlay } from '../../components/swipe';
 import type { SwipeAnimationType } from '../../components/swipe';
 import { useAuthStore } from '../../store/useAuthStore';
 import { matchService } from '../../services/match.service';
+import { analyticsService } from '../../services/analytics.service';
 import type { Gender, Profile } from '../../types';
 
-export default function SwipeDeckScreen() {
+export default function SwipeDeckScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
   const userGender: Gender = user?.gender || 'male';
   const likeAnimationType: SwipeAnimationType = userGender === 'female' ? 'kiss' : 'rose';
@@ -62,6 +64,7 @@ export default function SwipeDeckScreen() {
     setAnimation({ type: 'pass', visible: true });
     try {
       await matchService.sendPass(profile.id);
+      analyticsService.track('swipe_left', { user_id: profile.id });
     } catch (error) {
       console.error('Error sending pass:', error);
     }
@@ -76,6 +79,7 @@ export default function SwipeDeckScreen() {
 
       // Real mutual match detected from Supabase
       if (result.is_mutual_match) {
+        analyticsService.track('mutual_match_created', { match_id: profile.id });
         setTimeout(() => {
           setAnimation({
             type: 'match',
@@ -83,6 +87,8 @@ export default function SwipeDeckScreen() {
             matchedName: profile.first_name || 'User',
           });
         }, 2600);
+      } else {
+        analyticsService.track(likeType === 'rose' ? 'swipe_right_rose' : 'swipe_right_kiss', { user_id: profile.id });
       }
     } catch (error) {
       console.error('Error sending like:', error);
@@ -111,7 +117,9 @@ export default function SwipeDeckScreen() {
         <View style={styles.header}>
           <Text style={styles.logo}>💕</Text>
           <Text style={styles.title}>Discover</Text>
-          <View style={styles.headerRight} />
+          <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
+            <Text style={styles.headerEmoji}>💝</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -126,7 +134,9 @@ export default function SwipeDeckScreen() {
       <View style={styles.header}>
         <Text style={styles.logo}>💕</Text>
         <Text style={styles.title}>Discover</Text>
-        <View style={styles.headerRight} />
+        <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
+          <Text style={styles.headerEmoji}>💝</Text>
+        </TouchableOpacity>
       </View>
 
       {/* FIX: Pass formatted profiles — handle both real DB shape and legacy shape */}
@@ -177,8 +187,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.text,
   },
-  headerRight: {
-    width: 28,
+  headerEmoji: {
+    fontSize: 24,
   },
   loadingContainer: {
     flex: 1,

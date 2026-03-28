@@ -64,8 +64,13 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Account Deleted', 'Your account has been deleted.');
+          onPress: async () => {
+            try {
+              await useAuthStore.getState().deleteAccount();
+              Alert.alert('Account Deleted', 'Your account and data have been removed.');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to delete account');
+            }
           },
         },
       ]

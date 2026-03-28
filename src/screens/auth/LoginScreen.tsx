@@ -6,6 +6,7 @@ import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useAuthStore } from '../../store';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Input } from '../../components/ui';
+import { analyticsService } from '../../services/analytics.service';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -16,7 +17,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const { login, isLoading, error } = useAuthStore();
+  const { login, signInWithOAuth, isLoading, error } = useAuthStore();
 
   const validateForm = () => {
     let isValid = true;
@@ -44,8 +45,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     
     try {
       await login({ email, password });
+      analyticsService.track('sign_up_completed', { method: 'email' }); // Logins use same goal for now
     } catch (err) {
       Alert.alert('Login Failed', error || 'Please check your credentials');
+    }
+  };
+
+  const handleOAuth = async (provider: 'google' | 'apple') => {
+    try {
+      await signInWithOAuth(provider);
+      analyticsService.track('sign_up_completed', { method: provider });
+    } catch (err: any) {
+      Alert.alert('Login Failed', err.message || 'OAuth login failed');
     }
   };
 
@@ -113,10 +124,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
 
           <View style={styles.socialButtons}>
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={() => handleOAuth('apple')}
+              disabled={isLoading}
+            >
               <Text style={styles.socialButtonText}>🍎 Apple</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={() => handleOAuth('google')}
+              disabled={isLoading}
+            >
               <Text style={styles.socialButtonText}>G Google</Text>
             </TouchableOpacity>
           </View>

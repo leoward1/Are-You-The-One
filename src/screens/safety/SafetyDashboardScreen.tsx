@@ -179,13 +179,25 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
         <Card variant="elevated" padding="none">
           {safetyFeatures.map((feature, index) => (
             <React.Fragment key={index}>
-              <View style={styles.featureItem}>
+              <TouchableOpacity
+                style={styles.featureItem}
+                onPress={() => {
+                  if (feature.title === 'Trusted Contacts') {
+                    navigation.navigate('TrustedContacts');
+                  } else {
+                    Alert.alert(feature.title, feature.description);
+                  }
+                }}
+              >
                 <Text style={styles.featureIcon}>{feature.icon}</Text>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureTitle}>{feature.title}</Text>
                   <Text style={styles.featureDescription}>{feature.description}</Text>
                 </View>
-              </View>
+                {feature.title === 'Trusted Contacts' && (
+                  <Text style={styles.chevron}>›</Text>
+                )}
+              </TouchableOpacity>
               {index < safetyFeatures.length - 1 && <View style={styles.divider} />}
             </React.Fragment>
           ))}
@@ -256,4 +268,5 @@ const styles = StyleSheet.create({
   emergencyTitle: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.error, marginBottom: SPACING.xs },
   emergencyText: { fontSize: 14, fontFamily: FONTS.regular, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
   emergencyButton: { backgroundColor: COLORS.error },
+  chevron: { fontSize: 24, color: COLORS.textSecondary, fontFamily: FONTS.regular },
 });

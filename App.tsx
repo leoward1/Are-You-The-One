@@ -9,6 +9,8 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
+import Constants from 'expo-constants';
+
 // Keep the native splash screen visible while we load auth state
 SplashScreen.preventAutoHideAsync();
 
@@ -51,11 +53,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <NavigationContainer onReady={() => {
-          SplashScreen.hideAsync();
-        }}>
-          <RootNavigator />
-        </NavigationContainer>
+          <NavigationContainer onReady={() => {
+            SplashScreen.hideAsync();
+          }}>
+            <RootNavigator />
+          </NavigationContainer>
         <StatusBar style="auto" />
       </SafeAreaProvider>
     </GestureHandlerRootView>

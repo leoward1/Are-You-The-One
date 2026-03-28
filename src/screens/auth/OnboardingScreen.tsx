@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
+import { VideoRecorder } from '../../components/onboarding/VideoRecorder';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,6 +25,7 @@ const STEPS = [
   { title: 'The Basics', subtitle: 'Tell us a bit about who you are.' },
   { title: 'Interests', subtitle: 'What do you love to do?' },
   { title: 'Photos', subtitle: 'Show your best side! Add at least 3.' },
+  { title: 'Video Intro', subtitle: 'Introduce yourself in 30 seconds!' },
   { title: 'All Set!', subtitle: 'Ready to find your match?' },
 ];
 
@@ -39,6 +41,8 @@ export default function OnboardingScreen() {
   const [city, setCity] = useState(user?.city || '');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -137,6 +141,7 @@ export default function OnboardingScreen() {
         height,
         city,
         interests: selectedInterests,
+        video_intro: videoUri || '',
         is_onboarded: true,
       });
     } catch (error: any) {
@@ -247,6 +252,47 @@ export default function OnboardingScreen() {
           </View>
         );
       case 3:
+        return (
+          <View style={styles.stepContainer}>
+            <Text style={styles.photoHint}>
+              Record a brief intro to help matches get to know you!
+            </Text>
+            {videoUri ? (
+              <View style={styles.videoPreviewContainer}>
+                <View style={styles.videoPlaceholder}>
+                  <Text style={styles.videoText}>🎬 Video Recorded!</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.retakeButton}
+                  onPress={() => setIsRecording(true)}
+                >
+                  <Text style={styles.retakeText}>Retake Video</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.recordLargeButton}
+                onPress={() => setIsRecording(true)}
+              >
+                <Text style={styles.recordEmoji}>📸</Text>
+                <Text style={styles.recordLabel}>Start Camera</Text>
+              </TouchableOpacity>
+            )}
+
+            {isRecording && (
+              <View style={StyleSheet.absoluteFill}>
+                 <VideoRecorder 
+                   onComplete={(uri) => {
+                     setVideoUri(uri);
+                     setIsRecording(false);
+                   }}
+                   onCancel={() => setIsRecording(false)}
+                 />
+              </View>
+            )}
+          </View>
+        );
+      case 4:
         return (
           <View style={[styles.stepContainer, styles.centerStep]}>
             <View style={styles.congratsCircle}>
@@ -494,5 +540,55 @@ const styles = StyleSheet.create({
   },
   flexButton: {
     flex: 1,
+  },
+  videoPreviewContainer: {
+    flex: 1,
+    gap: SPACING.md,
+    alignItems: 'center',
+  },
+  videoPlaceholder: {
+    width: '100%',
+    height: 300,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+  },
+  videoText: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  retakeButton: {
+    padding: SPACING.md,
+  },
+  retakeText: {
+    fontSize: 16,
+    fontFamily: FONTS.medium,
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
+  },
+  recordLargeButton: {
+    width: '100%',
+    height: 300,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+    gap: SPACING.md,
+  },
+  recordEmoji: {
+    fontSize: 64,
+  },
+  recordLabel: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textSecondary,
   },
 });

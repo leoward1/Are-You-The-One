@@ -130,6 +130,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     const isFinished = !!winner || newState.every(c => c !== null);
 
     try {
+      const otherUserId = match?.user_a_id === user?.id ? match?.user_b_id : match?.user_a_id;
+      
       await chatService.sendMessage({
         match_id: matchId,
         type: 'game',
@@ -137,7 +139,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         game_data: {
           type: 'tictactoe',
           state: newState,
-          turn_id: 'OTHER_ID', // Swap logic would go here
+          turn_id: otherUserId || '', 
           winner_id: winner,
           is_finished: isFinished,
         },
@@ -175,6 +177,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         match_id: item.match_id,
       }}
       isOwn={item.from_user_id === user?.id}
+      currentUserId={user?.id || ''}
       onMove={(newState) => handleMove(item.id, newState)}
     />
   );

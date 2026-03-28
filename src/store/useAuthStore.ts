@@ -14,6 +14,8 @@ interface AuthState {
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
   initAuthListener: () => () => void;
   clearError: () => void;
 }
@@ -114,6 +116,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       set({
         error: error.message || 'Update failed',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  deleteAccount: async () => {
+    const { logout } = get();
+    set({ isLoading: true, error: null });
+    try {
+      // Logic for deleting account in authService
+      await authService.deleteAccount();
+      await logout();
+    } catch (error: any) {
+      set({
+        error: error.message || 'Delete account failed',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  signInWithOAuth: async (provider: 'google' | 'apple') => {
+    set({ isLoading: true, error: null });
+    try {
+      await authService.signInWithOAuth(provider);
+    } catch (error: any) {
+      set({
+        error: error.message || 'OAuth login failed',
         isLoading: false,
       });
       throw error;

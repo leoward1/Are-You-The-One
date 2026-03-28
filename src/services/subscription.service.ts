@@ -105,6 +105,34 @@ class SubscriptionService {
 
     return subscription as Subscription | null;
   }
+
+  async initializePaymentSheet(priceId: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // BRIDGE: In a real app, you'd call a Supabase Edge Function or your Laravel API
+    // that uses your Stripe SECRET key to create a PaymentIntent.
+    // Replace the URL below with your actual endpoint.
+    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/stripe/payment-sheet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+      },
+      body: JSON.stringify({
+        priceId,
+        userId: user.id,
+      }),
+    });
+
+    const { paymentIntent, ephemeralKey, customer } = await response.json();
+
+    return {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    };
+  }
 }
 
 export const subscriptionService = new SubscriptionService();

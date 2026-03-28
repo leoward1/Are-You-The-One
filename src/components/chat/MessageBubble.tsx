@@ -14,6 +14,7 @@ interface MessageBubbleProps {
     match_id: string;
   };
   isOwn: boolean;
+  currentUserId: string;
   showTimestamp?: boolean;
   onMove?: (newState: string[]) => void;
 }
@@ -21,6 +22,7 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   isOwn,
+  currentUserId,
   showTimestamp = true,
   onMove,
 }) => {
@@ -47,7 +49,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <TicTacToe
             matchId={message.match_id}
             gameData={message.game_data}
-            isOwnTurn={message.game_data.turn_id === (isOwn ? message.senderId : 'OTHER_ID')} // Mock logic for now
+            isOwnTurn={message.game_data.turn_id === currentUserId}
             onMove={(newState: string[]) => {
               onMove?.(newState);
             }}

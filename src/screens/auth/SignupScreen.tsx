@@ -15,6 +15,7 @@ import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useAuthStore } from '../../store';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Input } from '../../components/ui';
+import { analyticsService } from '../../services/analytics.service';
 
 type SignupScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
@@ -118,6 +119,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
         birthdate: formData.birthdate,
         city: formData.city || '',
       });
+      analyticsService.track('sign_up_completed', { method: 'email' });
       navigation.navigate('Onboarding');
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message || 'Please try again');

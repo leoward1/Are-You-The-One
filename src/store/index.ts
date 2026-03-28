@@ -3,3 +3,4 @@ export { useMatchStore } from './useMatchStore';
 export { useChatStore } from './useChatStore';
 export { useSafetyStore } from './useSafetyStore';
 export { useSubscriptionStore } from './useSubscriptionStore';
+export { useCreditsStore } from './useCreditsStore';

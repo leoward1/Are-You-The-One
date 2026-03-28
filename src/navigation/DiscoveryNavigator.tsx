@@ -1,12 +1,13 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import SwipeDeckScreen from '@/screens/discovery/SwipeDeckScreen';
 import ProfileDetailScreen from '@/screens/discovery/ProfileDetailScreen';
+import SuccessStoriesScreen from '@/screens/discovery/SuccessStoriesScreen';
 
 export type DiscoveryStackParamList = {
   SwipeDeck: undefined;
   ProfileDetail: { userId: string };
+  SuccessStories: undefined;
 };
 
 const Stack = createNativeStackNavigator<DiscoveryStackParamList>();
@@ -23,6 +24,11 @@ export default function DiscoveryNavigator() {
         name="ProfileDetail"
         component={ProfileDetailScreen}
         options={{ title: 'Profile' }}
+      />
+      <Stack.Screen
+        name="SuccessStories"
+        component={SuccessStoriesScreen}
+        options={{ title: 'Success Stories', headerShown: false }}
       />
     </Stack.Navigator>
   );

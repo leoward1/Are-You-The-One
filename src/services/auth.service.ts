@@ -136,6 +136,37 @@ class AuthService {
 
     return this.getCurrentUser();
   }
+
+  async deleteAccount(): Promise<void> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', user.id);
+
+    if (error) throw new Error(error.message);
+
+    await supabase
+      .from('photos')
+      .delete()
+      .eq('user_id', user.id);
+  }
+
+  async signInWithOAuth(provider: 'google' | 'apple') {
+    // Note: On native, use signInWithIdToken or AuthSession
+    // This is the simplest OAuth redirect for Supabase + Expo
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: 'areyoutheone://auth-callback',
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  }
 }
 
 export const authService = new AuthService();

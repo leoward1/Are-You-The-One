@@ -511,7 +511,25 @@ USING (
 );
 ```
 
-## 6. Test Connection
+## 6. Social Login (Google & Apple)
+
+To use the Google and Apple sign-in buttons in the app:
+
+### Step F — Configure Supabase Providers:
+1. Go to **Authentication** → **Providers** in Supabase Dashboard.
+2. **Google**:
+   - Enable Google.
+   - For iOS/Android, you will need to set up Google Cloud Console and get your Client IDs.
+   - Add `areyoutheone://auth-callback` to your **Allowed Redirect URLs** in **Authentication** → **URL Configuration**.
+3. **Apple**:
+   - Enable Apple.
+   - You will need a Service ID and Secret Key from your Apple Developer account.
+   - Add `areyoutheone://auth-callback` to your **Allowed Redirect URLs**.
+
+### Step G — Configure Deeplinking:
+The app uses the scheme `areyoutheone`. Ensure your Supabase **Site URL** (under URL Configuration) is set to `areyoutheone://auth-callback` if you are using standard redirects.
+
+## 7. Test Connection
 
 Run your app and check the console for any Supabase connection warnings.
 

@@ -3,12 +3,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SafetyDashboardScreen from '@/screens/safety/SafetyDashboardScreen';
 import ActiveCheckinScreen from '@/screens/safety/ActiveCheckinScreen';
 import DateModeScreen from '@/screens/safety/DateModeScreen';
+import TrustedContactsScreen from '@/screens/safety/TrustedContactsScreen';
 
 export type SafetyStackParamList = {
   SafetyDashboard: undefined;
-  // FIX: ActiveCheckin now receives checkinId from real Supabase row
   ActiveCheckin: { checkinId: string };
   DateMode: { checkinId: string; partnerName: string };
+  TrustedContacts: undefined;
 };
 
 const Stack = createNativeStackNavigator<SafetyStackParamList>();
@@ -30,6 +31,11 @@ export default function SafetyNavigator() {
         name="DateMode"
         component={DateModeScreen}
         options={{ title: 'Date Mode', headerLeft: () => null }}
+      />
+      <Stack.Screen
+        name="TrustedContacts"
+        component={TrustedContactsScreen}
+        options={{ title: 'Trusted Contacts' }}
       />
     </Stack.Navigator>
   );

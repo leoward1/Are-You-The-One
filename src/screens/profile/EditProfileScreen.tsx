@@ -19,6 +19,8 @@ import { supabase } from '../../config/supabase';
 export default function EditProfileScreen() {
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
     bio: user?.bio || '',
     city: user?.city || '',
     occupation: user?.occupation || '',
@@ -121,6 +123,8 @@ export default function EditProfileScreen() {
     setIsSaving(true);
     try {
       await updateProfile({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         bio: formData.bio,
         city: formData.city,
         occupation: formData.occupation,
@@ -165,6 +169,26 @@ export default function EditProfileScreen() {
               </Text>
             </TouchableOpacity>
           )}
+        </View>
+
+        <Text style={styles.sectionTitle}>Basic Info</Text>
+        <View style={styles.row}>
+          <View style={styles.halfWidth}>
+            <Input
+              label="First Name"
+              placeholder="First Name"
+              value={formData.first_name}
+              onChangeText={(text) => setFormData({ ...formData, first_name: text })}
+            />
+          </View>
+          <View style={styles.halfWidth}>
+            <Input
+              label="Last Name"
+              placeholder="Last Name"
+              value={formData.last_name}
+              onChangeText={(text) => setFormData({ ...formData, last_name: text })}
+            />
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>About You</Text>
