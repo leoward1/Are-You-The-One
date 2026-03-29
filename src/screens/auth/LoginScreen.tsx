@@ -17,7 +17,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const { login, signInWithOAuth, isLoading, error } = useAuthStore();
+  const { login, signInWithOAuth, resetPassword, isLoading, error } = useAuthStore();
 
   const validateForm = () => {
     let isValid = true;
@@ -58,6 +58,31 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'OAuth login failed');
     }
+  };
+
+  const handleForgotPassword = () => {
+    if (!email) {
+      setEmailError('Please enter your email to reset password');
+      return;
+    }
+    Alert.alert(
+      'Reset Password',
+      `Send a password reset link to ${email}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Send Link', 
+          onPress: async () => {
+            try {
+              await resetPassword(email);
+              Alert.alert('Check Your Email', 'If an account exists, a password reset link has been sent to your email address.');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not send reset link');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -103,7 +128,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               error={passwordError}
             />
 
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 

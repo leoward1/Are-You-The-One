@@ -16,6 +16,7 @@ interface AuthState {
   updateProfile: (data: Partial<User>) => Promise<void>;
   deleteAccount: () => Promise<void>;
   signInWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   initAuthListener: () => () => void;
   clearError: () => void;
 }
@@ -145,6 +146,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       set({
         error: error.message || 'OAuth login failed',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  resetPassword: async (email: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await authService.resetPassword(email);
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Password reset failed',
         isLoading: false,
       });
       throw error;

@@ -167,6 +167,13 @@ class AuthService {
     if (error) throw error;
     return data;
   }
+
+  async resetPassword(email: string): Promise<void> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'areyoutheone://reset-password',
+    });
+    if (error) throw new Error(error.message);
+  }
 }
 
 export const authService = new AuthService();
