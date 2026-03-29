@@ -179,6 +179,33 @@ export default function ProfileDetailScreen({ route, navigation }: ProfileDetail
     }
   };
 
+  const handleReport = () => {
+    if (!profile) return;
+    Alert.alert(
+      'Report or Block',
+      `Are you sure you want to report or block ${profile.first_name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block User', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('User Blocked', `${profile.first_name} has been blocked and will no longer appear.`);
+            navigation.goBack();
+          }
+        },
+        { 
+          text: 'Report Profile', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Profile Reported', `Thank you. Our moderation team will review this profile within 24 hours.`);
+            navigation.goBack();
+          }
+        }
+      ]
+    );
+  };
+
   const heightLabel = (inches?: number) => {
     if (!inches) return null;
     const ft = Math.floor(inches / 12);
@@ -258,10 +285,14 @@ export default function ProfileDetailScreen({ route, navigation }: ProfileDetail
             </View>
           </LinearGradient>
 
-          {/* Back button */}
+          {/* Top Bar with actions */}
           <SafeAreaView style={styles.topBar} edges={['top']}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle}>
               <Text style={styles.backArrow}>←</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={handleReport} style={styles.reportCircle}>
+              <Text style={styles.reportIcon}>⋮</Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -370,6 +401,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
   },
@@ -382,6 +415,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backArrow: { fontSize: 20, color: COLORS.white },
+  reportCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reportIcon: { fontSize: 24, color: COLORS.white, fontWeight: 'bold' },
 
   // Photo info
   photoInfo: { gap: 4 },

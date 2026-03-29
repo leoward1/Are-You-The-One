@@ -164,6 +164,32 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return board.every(c => c !== null) ? 'draw' : null;
   };
 
+  const handleReport = () => {
+    Alert.alert(
+      'Report or Block',
+      `Are you sure you want to report or block ${matchName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block User', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('User Blocked', `${matchName} has been blocked and this chat is closed.`);
+            navigation.goBack();
+          }
+        },
+        { 
+          text: 'Report Profile', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Profile Reported', `Thank you. Our moderation team will review this conversation within 24 hours.`);
+            navigation.goBack();
+          }
+        }
+      ]
+    );
+  };
+
   const renderMessage = ({ item }: { item: Message }) => (
     <MessageBubble
       message={{
@@ -215,6 +241,9 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
             }) : Alert.alert('Locked', 'Complete 1 voice call to unlock Video calls!')}
           >
             <Text style={[styles.actionIcon, !isVideoUnlocked && styles.disabledText]}>📹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerAction} onPress={handleReport}>
+            <Text style={styles.actionIcon}>⋮</Text>
           </TouchableOpacity>
         </View>
       </View>

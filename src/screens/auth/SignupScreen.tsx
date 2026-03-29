@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -291,6 +292,13 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 keyboardType="numeric"
               />
 
+              <Text style={styles.tosText}>
+                By tapping "{isLoading ? 'Creating account...' : 'Create Account'}", you agree to our{' '}
+                <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/terms')}>Terms of Service</Text>
+                {' '}and{' '}
+                <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/privacy')}>Privacy Policy</Text>.
+              </Text>
+
               <Button
                 title={isLoading ? 'Creating account...' : 'Create Account'}
                 onPress={handleSignup}
@@ -441,5 +449,17 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 16,
     fontFamily: FONTS.semiBold,
+  },
+  tosText: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginVertical: SPACING.md,
+    lineHeight: 18,
+  },
+  tosLink: {
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
   },
 });
