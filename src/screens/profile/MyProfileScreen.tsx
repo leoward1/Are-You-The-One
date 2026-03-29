@@ -108,21 +108,7 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
           </Card>
 
           <Card variant="elevated" padding="none" style={styles.extraMenu}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => navigation.navigate('SafetyTab' as any)}
-            >
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuEmoji}>🛡️</Text>
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>Safety Center</Text>
-                <Text style={styles.menuSubtitle}>Your safety is our priority</Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
 
-            <View style={styles.divider} />
 
             <TouchableOpacity
               style={styles.menuItem}
