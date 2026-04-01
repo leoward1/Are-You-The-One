@@ -21,6 +21,7 @@ import {
   ErrorCode,
 } from 'react-native-iap';
 import { supabase } from '@/config/supabase';
+import { apiService } from './api';
 
 // ─── Product IDs (must match App Store Connect) ──────────────────────────
 export const IAP_PRODUCT_IDS = Platform.select({
@@ -272,48 +273,19 @@ class IAPService {
     purchase: Purchase,
     credits: number
   ): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    // Record the purchase transaction
-    const { error: txError } = await supabase
-      .from('credit_transactions')
-      .insert({
-        user_id: user.id,
-        type: 'purchase',
-        amount: credits,
-        product_id: purchase.productId,
-        transaction_id: ('transactionId' in purchase) ? purchase.transactionId : null,
-        receipt: purchase.purchaseToken,
+    // SECURITY: Validate Apple/Google receipts securely via your backend.
+    // NEVER grant credits directly from the client side to prevent spoofing.
+    try {
+      await apiService.post('/payments/verify-receipt', {
+        receipt: Platform.OS === 'ios' ? (purchase as any).transactionReceipt : purchase.purchaseToken,
+        productId: purchase.productId,
         platform: Platform.OS,
-        created_at: new Date().toISOString(),
+        transactionId: ('transactionId' in purchase) ? purchase.transactionId : null,
+        expectedCredits: credits,
       });
-
-    if (txError) {
-      console.error('[IAP] Failed to record transaction:', txError);
-      // Don't throw — credits may have been granted by a DB trigger
-    }
-
-    // Update user's credit balance (upsert)
-    const { data: currentBalance } = await supabase
-      .from('user_credits')
-      .select('balance')
-      .eq('user_id', user.id)
-      .single();
-
-    const newBalance = (currentBalance?.balance || 0) + credits;
-
-    const { error: balError } = await supabase
-      .from('user_credits')
-      .upsert({
-        user_id: user.id,
-        balance: newBalance,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (balError) {
-      console.error('[IAP] Failed to update balance:', balError);
-      throw balError;
+    } catch (error: any) {
+      console.error('[IAP] Backend verification failed:', error);
+      throw new Error('Failed to securely verify the purchase receipt.');
     }
   }
 

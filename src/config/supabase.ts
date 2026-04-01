@@ -10,18 +10,20 @@ const ExpoSecureStoreAdapter = {
 };
 
 // Read from expo-constants (set via app.json extra block)
-// Fallback to hardcoded values to guarantee the build always has credentials
+// SECURITY: No hardcoded fallback — app will fail visibly if keys are missing
 const supabaseUrl: string =
-  Constants.expoConfig?.extra?.supabaseUrl ??
-  'https://jaspfotwnmjqqwoujnfm.supabase.co';
+  process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 
 const supabaseAnonKey: string =
-  Constants.expoConfig?.extra?.supabaseAnonKey ??
-  'sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84';
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (__DEV__) {
-  console.log('Supabase URL:', supabaseUrl ? 'loaded' : 'MISSING');
-  console.log('Supabase Key:', supabaseAnonKey ? 'loaded' : 'MISSING');
+  console.log('Supabase URL:', supabaseUrl ? '✅ loaded' : '❌ MISSING');
+  console.log('Supabase Key:', supabaseAnonKey ? '✅ loaded' : '❌ MISSING');
+}
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('[Security] Supabase credentials are missing from environment variables (.env).');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

@@ -1,5 +1,6 @@
 import { supabase } from '@/config/supabase';
 import { SubscriptionPlan, Subscription } from '@/types';
+import { apiService } from './api';
 
 class SubscriptionService {
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -13,10 +14,10 @@ class SubscriptionService {
         price_id: 'price_free',
         interval: 'month',
         features: {
-          daily_reveals: 10,
+          daily_reveals: 5,
           voice_unlock: 'activity_based',
           video_unlock: 'activity_based',
-          daily_roses_kisses: 10,
+          daily_roses_kisses: 5,
         },
       },
       {
@@ -26,10 +27,10 @@ class SubscriptionService {
         price_id: 'price_plus_monthly',
         interval: 'month',
         features: {
-          daily_reveals: 50,
+          daily_reveals: 25,
           voice_unlock: 'immediate',
           video_unlock: 'activity_based',
-          daily_roses_kisses: 50,
+          daily_roses_kisses: 25,
         },
       },
       {
@@ -54,25 +55,19 @@ class SubscriptionService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Determine tier from priceId
-    const tier = priceId.includes('pro') ? 'pro' : priceId.includes('plus') ? 'plus' : 'free';
-
-    const { data: subscription, error } = await supabase
-      .from('subscriptions')
-      .upsert({
-        user_id: user.id,
-        tier,
-        status: 'active',
-        stripe_subscription_id: paymentMethodId,
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message);
-    return subscription as Subscription;
+    // SECURITY: Tier assignment and active subscription status MUST be securely
+    // finalized on the backend by verifying the Stripe/StoreKit receipt.
+    // NEVER allow the client to mutate the 'subscriptions' table directly.
+    try {
+      const subscription = await apiService.post<Subscription>('/stripe/subscribe', {
+        priceId,
+        paymentMethodId,
+      });
+      return subscription;
+    } catch (error: any) {
+      console.error('[Subscription] Backend verification failed:', error);
+      throw new Error('Failed to process and verify the subscription securely.');
+    }
   }
 
   async cancelSubscription(): Promise<void> {
@@ -110,28 +105,22 @@ class SubscriptionService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // BRIDGE: In a real app, you'd call a Supabase Edge Function or your Laravel API
-    // that uses your Stripe SECRET key to create a PaymentIntent.
-    // Replace the URL below with your actual endpoint.
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/stripe/payment-sheet`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      },
-      body: JSON.stringify({
+    // SECURITY: Rely on authenticated API service wrapper to reach Stripe Edge Function
+    try {
+      const response = await apiService.post<any>('/stripe/payment-sheet', {
         priceId,
         userId: user.id,
-      }),
-    });
+      });
 
-    const { paymentIntent, ephemeralKey, customer } = await response.json();
-
-    return {
-      paymentIntent,
-      ephemeralKey,
-      customer,
-    };
+      return {
+        paymentIntent: response.paymentIntent,
+        ephemeralKey: response.ephemeralKey,
+        customer: response.customer,
+      };
+    } catch (error: any) {
+      console.error('[Subscription] Failed to init payment sheet:', error);
+      throw new Error('Could not establish secure payment connection.');
+    }
   }
 }
 

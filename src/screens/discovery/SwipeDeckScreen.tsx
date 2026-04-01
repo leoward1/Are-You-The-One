@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -59,19 +59,26 @@ export default function SwipeDeckScreen({ navigation }: any) {
     loadProfiles(true);
   }, []);
 
-  // FIX: Real like written to Supabase likes table
+  // SECURITY: Throttle swipe actions to prevent spam
+  const swipeLockRef = useRef(false);
+
   const handleSwipeLeft = useCallback(async (profile: Profile) => {
+    if (swipeLockRef.current) return;
+    swipeLockRef.current = true;
     setAnimation({ type: 'pass', visible: true });
     try {
       await matchService.sendPass(profile.id);
       analyticsService.track('swipe_left', { user_id: profile.id });
     } catch (error) {
       console.error('Error sending pass:', error);
+    } finally {
+      setTimeout(() => { swipeLockRef.current = false; }, 800);
     }
   }, []);
 
-  // FIX: Real rose/kiss written to Supabase, real mutual match detection
   const handleSwipeRight = useCallback(async (profile: Profile) => {
+    if (swipeLockRef.current) return;
+    swipeLockRef.current = true;
     setAnimation({ type: likeAnimationType, visible: true });
     try {
       const likeType = userGender === 'female' ? 'kiss' : 'rose';
@@ -92,6 +99,8 @@ export default function SwipeDeckScreen({ navigation }: any) {
       }
     } catch (error) {
       console.error('Error sending like:', error);
+    } finally {
+      setTimeout(() => { swipeLockRef.current = false; }, 800);
     }
   }, [userGender, likeAnimationType]);
 

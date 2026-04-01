@@ -187,7 +187,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           await apiService.clearTokens();
         } else if (event === 'TOKEN_REFRESHED' && session) {
           // Token refreshed automatically by Supabase, sync with apiService
-          console.log('Auth token refreshed');
+          if (__DEV__) console.log('Auth token refreshed');
           await apiService.setTokens(session.access_token, session.refresh_token || '');
         }
       }

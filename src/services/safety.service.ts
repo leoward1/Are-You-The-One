@@ -58,6 +58,10 @@ class SafetyService {
   }
 
   async updateLocation(checkinId: string, coords: Coordinates): Promise<SafetyCheckin> {
+    // SECURITY: Verify user owns this checkin
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: checkin, error } = await supabase
       .from('safety_checkins')
       .update({
@@ -66,6 +70,7 @@ class SafetyService {
         updated_at: new Date().toISOString(),
       })
       .eq('id', checkinId)
+      .eq('user_id', user.id) // SECURITY: ownership check
       .select()
       .single();
 
@@ -74,6 +79,9 @@ class SafetyService {
   }
 
   async completeCheckin(checkinId: string): Promise<SafetyCheckin> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: checkin, error } = await supabase
       .from('safety_checkins')
       .update({
@@ -81,6 +89,7 @@ class SafetyService {
         updated_at: new Date().toISOString(),
       })
       .eq('id', checkinId)
+      .eq('user_id', user.id) // SECURITY: ownership check
       .select()
       .single();
 
@@ -89,6 +98,9 @@ class SafetyService {
   }
 
   async triggerSOS(checkinId: string): Promise<SafetyCheckin> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: checkin, error } = await supabase
       .from('safety_checkins')
       .update({
@@ -96,6 +108,7 @@ class SafetyService {
         updated_at: new Date().toISOString(),
       })
       .eq('id', checkinId)
+      .eq('user_id', user.id) // SECURITY: ownership check
       .select()
       .single();
 
@@ -104,6 +117,9 @@ class SafetyService {
   }
 
   async extendCheckin(checkinId: string, newEndTime: string): Promise<SafetyCheckin> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: checkin, error } = await supabase
       .from('safety_checkins')
       .update({
@@ -111,6 +127,7 @@ class SafetyService {
         updated_at: new Date().toISOString(),
       })
       .eq('id', checkinId)
+      .eq('user_id', user.id) // SECURITY: ownership check
       .select()
       .single();
 

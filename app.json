@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#8B1538"
     },
     "assetBundlePatterns": [
@@ -82,11 +82,6 @@
       "expo-web-browser"
     ],
     "extra": {
-      "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
-      "supabaseAnonKey": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84",
-      "apiBaseUrl": "https://api.areyoutheone.app/api/1.1",
-      "laravelApiKey": "",
-      "segmentWriteKey": "SEGMENT_WRITE_KEY_HERE",
       "eas": {
         "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
       }

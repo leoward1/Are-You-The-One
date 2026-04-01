@@ -17,10 +17,11 @@ class CallService {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
 
-            // 1. Create a Call Session record in Supabase
-            // In a real app, a Supabase hook or Edge Function would create the Daily Room
-            // For this MVP, we use a predictable URL (Insecure for production!)
-            const roomUrl = `https://areyoutheone.daily.co/match_${matchId.substring(0, 8)}`;
+            // SECURITY: Generate a unique, unpredictable room URL per call session
+            // In production, a Supabase Edge Function should create the Daily room
+            // and return a time-limited meeting token for each participant.
+            const roomToken = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+            const roomUrl = `https://areyoutheone.daily.co/s_${roomToken}`;
 
             const { data, error } = await supabase
                 .from('call_sessions')
@@ -55,6 +56,27 @@ class CallService {
 
     async endCall(sessionId: string): Promise<void> {
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Not authenticated');
+
+            // SECURITY: Verify user is part of the match associated with this call session
+            const { data: sessionData } = await supabase
+                .from('call_sessions')
+                .select('match_id')
+                .eq('id', sessionId)
+                .single();
+
+            if (!sessionData) throw new Error('Call session not found');
+
+            const { data: matchVerify } = await supabase
+                .from('matches')
+                .select('id')
+                .eq('id', sessionData.match_id)
+                .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
+                .single();
+
+            if (!matchVerify) throw new Error('Not authorized to end this call');
+
             if (this.callObject) {
                 await this.callObject.leave();
                 await this.callObject.destroy();

@@ -4,6 +4,7 @@ import MyProfileScreen from '@/screens/profile/MyProfileScreen';
 import EditProfileScreen from '@/screens/profile/EditProfileScreen';
 import SettingsScreen from '@/screens/profile/SettingsScreen';
 import SubscriptionScreen from '@/screens/profile/SubscriptionScreen';
+import SuccessStoriesScreen from '@/screens/profile/SuccessStoriesScreen';
 import BlockedUsersScreen from '@/screens/profile/BlockedUsersScreen';
 import HelpSupportScreen from '@/screens/profile/HelpSupportScreen';
 import TermsOfServiceScreen from '@/screens/profile/TermsOfServiceScreen';
@@ -14,6 +15,7 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   Settings: undefined;
   Subscription: undefined;
+  SuccessStories: undefined;
   BlockedUsers: undefined;
   HelpSupport: undefined;
   TermsOfService: undefined;
@@ -44,6 +46,11 @@ export default function ProfileNavigator() {
         name="Subscription"
         component={SubscriptionScreen}
         options={{ title: 'Subscription' }}
+      />
+      <Stack.Screen
+        name="SuccessStories"
+        component={SuccessStoriesScreen}
+        options={{ headerShown: false, title: 'Success Stories' }}
       />
       <Stack.Screen
         name="BlockedUsers"

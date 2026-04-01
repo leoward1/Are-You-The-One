@@ -116,6 +116,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           type: 'tictactoe',
           state: Array(9).fill(null),
           turn_id: user?.id || '',
+          player_x: user?.id || '',
+          player_o: match?.user_a_id === user?.id ? match?.user_b_id : match?.user_a_id,
           is_finished: false,
         },
       } as any);
@@ -124,7 +126,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     }
   };
 
-  const handleMove = async (messageId: string, newState: string[]) => {
+  const handleMove = async (messageId: string, newState: string[], oldGameData?: any) => {
     // Logic to determine winner and next turn
     const winner = checkWinner(newState);
     const isFinished = !!winner || newState.every(c => c !== null);
@@ -142,6 +144,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           turn_id: otherUserId || '', 
           winner_id: winner,
           is_finished: isFinished,
+          player_x: oldGameData?.player_x || '',
+          player_o: oldGameData?.player_o || '',
         },
       } as any);
     } catch (error) {
@@ -204,7 +208,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       }}
       isOwn={item.from_user_id === user?.id}
       currentUserId={user?.id || ''}
-      onMove={(newState) => handleMove(item.id, newState)}
+      onMove={(newState) => handleMove(item.id, newState, item.game_data)}
     />
   );
 

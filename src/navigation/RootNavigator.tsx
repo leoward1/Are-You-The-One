@@ -10,10 +10,12 @@ import { useAuthStore } from '@/store';
 
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import VideoIntroScreen from '@/screens/shared/VideoIntroScreen';
 
 export type RootStackParamList = {
   Auth: { screen?: string } | undefined;
   Main: undefined;
+  VideoIntroCamera: { userId: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -136,6 +138,11 @@ function AppNavigator() {
       ) : (
         <Stack.Screen name="Main" component={MainNavigator} />
       )}
+      <Stack.Screen 
+        name="VideoIntroCamera" 
+        component={VideoIntroScreen} 
+        options={{ presentation: 'fullScreenModal' }}
+      />
     </Stack.Navigator>
   );
 }

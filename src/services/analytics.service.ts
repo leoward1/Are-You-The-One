@@ -2,11 +2,16 @@ import { createClient } from '@segment/analytics-react-native';
 import { AnalyticsEvent } from '../types';
 import Constants from 'expo-constants';
 
-// Real Segment client initialization
-const segmentClient = createClient({
-  writeKey: Constants.expoConfig?.extra?.segmentWriteKey || 'WRITE_KEY_HERE',
-  trackAppLifecycleEvents: true,
-});
+// SECURITY: Validate segment key is real before initializing
+const segmentWriteKey = process.env.EXPO_PUBLIC_SEGMENT_WRITE_KEY || '';
+const isValidKey = segmentWriteKey && segmentWriteKey !== 'SEGMENT_WRITE_KEY_HERE' && segmentWriteKey !== 'WRITE_KEY_HERE';
+
+const segmentClient = isValidKey
+  ? createClient({
+      writeKey: segmentWriteKey,
+      trackAppLifecycleEvents: true,
+    })
+  : null;
 
 class AnalyticsService {
   private client = segmentClient;
@@ -23,7 +28,7 @@ class AnalyticsService {
     }
 
     try {
-        this.client.track(name, properties);
+        this.client?.track(name, properties);
     } catch (err) {
         console.warn('Analytics track failed:', err);
     }
@@ -38,7 +43,7 @@ class AnalyticsService {
     }
     
     try {
-        this.client.identify(userId, traits);
+        this.client?.identify(userId, traits);
     } catch (err) {
         console.warn('Analytics identify failed:', err);
     }
@@ -48,7 +53,7 @@ class AnalyticsService {
    * Reset user on logout.
    */
   reset() {
-    this.client.reset();
+    this.client?.reset();
   }
 }
 

@@ -1,24 +1,36 @@
 import { supabase } from '@/config/supabase';
 import { AuthResponse, LoginCredentials, SignupData, User } from '@/types';
+import { analyticsService } from './analytics.service';
+
+import { rateLimiter } from '@/utils/rateLimiter';
+import { sanitizeText } from '@/utils/sanitizer';
 
 class AuthService {
+
   async signup(data: SignupData): Promise<AuthResponse> {
+    await rateLimiter.checkLimit('AUTH_SIGNUP', data.email);
+
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
         data: {
-          first_name: data.first_name,
-          last_name: data.last_name,
+          first_name: sanitizeText(data.first_name, 50),
+          last_name: sanitizeText(data.last_name, 50),
           gender: data.gender,
           birthdate: data.birthdate,
-          city: data.city,
+          city: sanitizeText(data.city, 100),
         },
       },
     });
 
     if (error) throw new Error(error.message);
     if (!authData.user) throw new Error('Signup failed');
+
+    // SECURITY: Handle email verification requirement
+    if (!authData.session) {
+      throw new Error('Please check your email to verify your account before logging in.');
+    }
 
     // Wait briefly for the trigger to create the profile
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -37,13 +49,31 @@ class AuthService {
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    await rateLimiter.checkLimit('AUTH_LOGIN', credentials.email);
+
+    if (!__DEV__) {
+      analyticsService.track('auth_attempt', { email: credentials.email });
+    }
+
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (!__DEV__) {
+        analyticsService.track('auth_failed', { email: credentials.email, reason: error.message });
+      }
+      throw new Error(error.message);
+    }
     if (!authData.user) throw new Error('Login failed');
+
+    await rateLimiter.resetLimit('AUTH_LOGIN', credentials.email);
+    await rateLimiter.resetLimit('AUTH_SIGNUP', credentials.email);
+
+    if (!__DEV__) {
+      analyticsService.track('auth_success', { email: credentials.email });
+    }
 
     const profile = await this.getCurrentUser();
 
@@ -63,6 +93,18 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User> {
+    // SECURITY: Verify session and token expiry
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      throw new Error('Not authenticated');
+    }
+
+    const expiresAt = sessionData.session.expires_at;
+    if (expiresAt && Date.now() / 1000 > expiresAt) {
+      await this.logout();
+      throw new Error('Session expired. Please log in again.');
+    }
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error('Not authenticated');
 
@@ -141,17 +183,37 @@ class AuthService {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error('Not authenticated');
 
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', user.id);
+    // SECURITY: Cascade-delete ALL user data across every table (GDPR compliance)
+    const tablesToPurge = [
+      { table: 'messages', column: 'from_user_id' },
+      { table: 'likes', column: 'from_user_id' },
+      { table: 'likes', column: 'to_user_id' },
+      { table: 'reviews', column: 'from_user_id' },
+      { table: 'call_sessions', column: 'from_user_id' },
+      { table: 'safety_checkins', column: 'user_id' },
+      { table: 'user_settings', column: 'user_id' },
+      { table: 'user_preferences', column: 'user_id' },
+      { table: 'subscriptions', column: 'user_id' },
+      { table: 'photos', column: 'user_id' },
+    ];
 
+    for (const { table, column } of tablesToPurge) {
+      await supabase.from(table).delete().eq(column, user.id);
+    }
+
+    // Delete matches where user is either party
+    await supabase.from('matches').delete().or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`);
+
+    // Delete profile last (referenced by other tables)
+    const { error } = await supabase.from('profiles').delete().eq('id', user.id);
     if (error) throw new Error(error.message);
 
-    await supabase
-      .from('photos')
-      .delete()
-      .eq('user_id', user.id);
+    // Delete storage (photos bucket)
+    const { data: files } = await supabase.storage.from('photos').list(user.id);
+    if (files && files.length > 0) {
+      const filePaths = files.map(f => `${user.id}/${f.name}`);
+      await supabase.storage.from('photos').remove(filePaths);
+    }
   }
 
   async signInWithOAuth(provider: 'google' | 'apple') {
@@ -169,10 +231,13 @@ class AuthService {
   }
 
   async resetPassword(email: string): Promise<void> {
+    await rateLimiter.checkLimit('AUTH_LOGIN', email); // Re-using rate limiter to prevent spamming generic emails
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'areyoutheone://reset-password',
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
   }
 }
 

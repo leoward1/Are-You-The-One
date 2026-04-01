@@ -17,6 +17,7 @@ import { useAuthStore } from '../../store';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Input } from '../../components/ui';
 import { analyticsService } from '../../services/analytics.service';
+import { validatePassword } from '../../utils/validators';
 
 type SignupScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
@@ -72,10 +73,10 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    // SECURITY: Use shared validator for consistent password policy
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
     }
 
     if (formData.password !== formData.confirmPassword) {

@@ -1,5 +1,15 @@
 import { VALIDATION_RULES } from './constants';
 import { FormErrors } from '@/types';
+import { sanitizeText } from './sanitizer';
+
+const MAX_LENGTHS = {
+  NAME: 50,
+  CITY: 100,
+  OCCUPATION: 100,
+  BIO: 500,
+  MESSAGE: 2000,
+  NOTE: 500,
+};
 
 export const validateEmail = (email: string): string | null => {
   if (!email) {
@@ -34,8 +44,16 @@ export const validateName = (name: string, fieldName: string = 'Name'): string |
   if (!name || name.trim().length === 0) {
     return `${fieldName} is required`;
   }
-  if (name.trim().length < 2) {
+  const trimmed = name.trim();
+  if (trimmed.length < 2) {
     return `${fieldName} must be at least 2 characters`;
+  }
+  if (trimmed.length > MAX_LENGTHS.NAME) {
+    return `${fieldName} must be less than ${MAX_LENGTHS.NAME} characters`;
+  }
+  // Prevent common injection characters in names
+  if (/[<>{}()[\]\\/_|]/.test(trimmed)) {
+    return `${fieldName} contains invalid characters`;
   }
   return null;
 };
@@ -138,6 +156,36 @@ export const validateSignupForm = (data: {
   if (ageError) errors.birthdate = ageError;
   
   return errors;
+};
+
+/**
+ * Validates a file (photo or video) before upload.
+ */
+export const validateFile = (
+  file: { size: number; type: string; name?: string },
+  options: { maxSizeBytes: number; allowedMimeTypes: string[] }
+): string | null => {
+  if (file.size > options.maxSizeBytes) {
+    const mb = (options.maxSizeBytes / (1024 * 1024)).toFixed(0);
+    return `File size is too large (max ${mb}MB)`;
+  }
+  
+  if (!options.allowedMimeTypes.includes(file.type)) {
+    return 'Invalid file type';
+  }
+  
+  return null;
+};
+
+export const FILE_LIMITS = {
+  PHOTO: {
+    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  VIDEO: {
+    maxSizeBytes: 50 * 1024 * 1024, // 50MB
+    allowedMimeTypes: ['video/mp4', 'video/quicktime', 'video/webm'],
+  },
 };
 
 export const hasErrors = (errors: FormErrors): boolean => {

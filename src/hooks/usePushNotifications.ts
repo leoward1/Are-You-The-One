@@ -33,8 +33,9 @@ export function usePushNotifications() {
                     // Automatically save token to Supabase if user is logged in
                     if (user?.id) {
                         try {
+                            // SECURITY: Update 'profiles' table via secure RLS restricted update
                             await supabase
-                                .from('users')
+                                .from('profiles')
                                 .update({ push_token: token })
                                 .eq('id', user.id);
                         } catch (e) {

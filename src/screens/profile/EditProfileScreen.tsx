@@ -9,14 +9,18 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { supabaseService } from '../../services/supabase.service';
 import { supabase } from '../../config/supabase';
+import { validateName, validateBio } from '../../utils/validators';
+import { sanitizeText } from '../../utils/sanitizer';
 
 export default function EditProfileScreen() {
+  const navigation = useNavigation<any>();
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
     first_name: user?.first_name || '',
@@ -120,14 +124,33 @@ export default function EditProfileScreen() {
 
   // FIX: Real Supabase profile update
   const handleSave = async () => {
+    // SECURITY: Validate before saving
+    const firstNameError = validateName(formData.first_name, 'First Name');
+    if (firstNameError) {
+      Alert.alert('Validation Error', firstNameError);
+      return;
+    }
+
+    const lastNameError = validateName(formData.last_name, 'Last Name');
+    if (lastNameError) {
+      Alert.alert('Validation Error', lastNameError);
+      return;
+    }
+
+    const bioError = validateBio(formData.bio);
+    if (bioError) {
+      Alert.alert('Validation Error', bioError);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateProfile({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        bio: formData.bio,
-        city: formData.city,
-        occupation: formData.occupation,
+        first_name: sanitizeText(formData.first_name, 50),
+        last_name: sanitizeText(formData.last_name, 50),
+        bio: sanitizeText(formData.bio, 500),
+        city: sanitizeText(formData.city, 100),
+        occupation: sanitizeText(formData.occupation, 100),
         height: formData.height,
         interests: selectedInterests,
       });
@@ -170,6 +193,16 @@ export default function EditProfileScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        <Text style={styles.sectionTitle}>Video Intro</Text>
+        <Text style={styles.sectionSubtitle}>Record a 30s video to stand out!</Text>
+        <TouchableOpacity
+          style={[styles.addPhotoButton, { width: '100%', marginBottom: SPACING.md }]}
+          onPress={() => navigation.navigate('VideoIntroCamera', { userId: user?.id })}
+        >
+          <Text style={styles.addPhotoIcon}>🎥</Text>
+          <Text style={styles.addPhotoText}>{user?.video_intro ? 'Update Video Intro' : 'Record Video Intro'}</Text>
+        </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Basic Info</Text>
         <View style={styles.row}>

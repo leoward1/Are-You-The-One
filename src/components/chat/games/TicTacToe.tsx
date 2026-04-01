@@ -7,12 +7,14 @@ interface TicTacToeProps {
     matchId: string;
     gameData: GameData;
     isOwnTurn: boolean;
+    currentUserId: string;
     onMove: (newState: string[]) => void;
 }
 
 export const TicTacToe: React.FC<TicTacToeProps> = ({
     gameData,
     isOwnTurn,
+    currentUserId,
     onMove,
 }) => {
     const board = gameData.state as string[] || Array(9).fill(null);
@@ -21,10 +23,8 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({
         if (!isOwnTurn || board[index] || gameData.is_finished) return;
 
         const newBoard = [...board];
-        newBoard[index] = isOwnTurn ? 'X' : 'O'; // Simplified logic, should ideally be based on user ID
-
-        // In a real app, 'X' or 'O' would be assigned to players
-        // For this prototype, let's assume 'X' is the initiator
+        const mySymbol = gameData.player_x === currentUserId ? 'X' : 'O';
+        newBoard[index] = mySymbol;
 
         onMove(newBoard);
     };

@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase';
 import { Review, ApiResponse } from '../types';
+import { sanitizeText } from '../utils/sanitizer';
 
 class ReviewService {
     async submitReview(reviewData: Omit<Review, 'id' | 'created_at' | 'approved'>): Promise<ApiResponse<Review>> {
@@ -9,6 +10,8 @@ class ReviewService {
                 .insert([
                     {
                         ...reviewData,
+                        headline: sanitizeText(reviewData.headline, 100),
+                        body: sanitizeText(reviewData.body, 1000),
                         approved: false // Reviews require moderation by default as per PRD
                     }
                 ])

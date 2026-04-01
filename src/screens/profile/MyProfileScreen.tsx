@@ -108,9 +108,21 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
           </Card>
 
           <Card variant="elevated" padding="none" style={styles.extraMenu}>
-
-
             <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => navigation.navigate('SuccessStories')}
+            >
+              <View style={styles.menuIcon}>
+                <Text style={styles.menuEmoji}>💍</Text>
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Success Stories</Text>
+                <Text style={styles.menuSubtitle}>Real connections made here</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />            <TouchableOpacity
               style={styles.menuItem}
               onPress={() => navigation.navigate('HelpSupport')}
             >

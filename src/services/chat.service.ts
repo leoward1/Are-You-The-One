@@ -1,9 +1,21 @@
 import { supabase } from '@/config/supabase';
 import { Message, PaginatedResponse, SendMessageData } from '@/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { sanitizeText } from '@/utils/sanitizer';
 
 class ChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
+
+  // SECURITY: Helper to enforce IDOR checks prior to chat operations
+  private async checkMatchOwnership(matchId: string, userId: string): Promise<void> {
+    const { data } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('id', matchId)
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
+      .single();
+    if (!data) throw new Error('Not authorized to access this match');
+  }
 
   async getMessageHistory(
     matchId: string,
@@ -12,6 +24,8 @@ class ChatService {
   ): Promise<Message[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    await this.checkMatchOwnership(matchId, user.id);
 
     let query = supabase
       .from('messages')
@@ -35,6 +49,8 @@ class ChatService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    await this.checkMatchOwnership(data.match_id, user.id);
+
     let mediaUrl: string | undefined;
 
     // Upload media if present
@@ -55,13 +71,16 @@ class ChatService {
       mediaUrl = publicUrl;
     }
 
+    // SECURITY: Sanitize and validate message content
+    const sanitizedContent = sanitizeText(data.content, 5000) || null;
+
     const { data: message, error } = await supabase
       .from('messages')
       .insert({
         match_id: data.match_id,
         from_user_id: user.id,
         type: data.type,
-        content: data.content || null,
+        content: sanitizedContent,
         media: mediaUrl || null,
         game_data: (data as any).game_data || null,
       })
@@ -85,6 +104,8 @@ class ChatService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    await this.checkMatchOwnership(matchId, user.id);
+
     await supabase
       .from('messages')
       .update({ read: true })
@@ -96,6 +117,8 @@ class ChatService {
   async shareDateSuggestion(matchId: string, suggestionId: string): Promise<Message> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    await this.checkMatchOwnership(matchId, user.id);
 
     const { data: suggestion } = await supabase
       .from('date_suggestions')

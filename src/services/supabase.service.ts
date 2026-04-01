@@ -1,5 +1,7 @@
 import { supabase } from '../config/supabase';
 import type { User, SignupData, LoginCredentials } from '../types';
+import { sanitizeFileName } from '../utils/sanitizer';
+import { validateFile, FILE_LIMITS } from '../utils/validators';
 
 export const supabaseService = {
   // Auth methods
@@ -62,6 +64,8 @@ export const supabaseService = {
   },
 
   async updateUserProfile(userId: string, updates: Partial<User>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) throw new Error('Not authorized to update this profile');
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
@@ -75,7 +79,15 @@ export const supabaseService = {
 
   // Storage methods
   async uploadPhoto(userId: string, file: Blob, fileName: string) {
-    const filePath = `${userId}/${fileName}`;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) throw new Error('Not authorized to upload for this user');
+
+    // SECURITY: Strict file type and size validation
+    const fileError = validateFile({ size: file.size, type: file.type }, FILE_LIMITS.PHOTO);
+    if (fileError) throw new Error(fileError);
+
+    const safeFileName = sanitizeFileName(fileName);
+    const filePath = `${userId}/${safeFileName}`;
 
     const { data, error } = await supabase.storage
       .from('photos')
@@ -90,7 +102,39 @@ export const supabaseService = {
     return publicUrl;
   },
 
+  async uploadVideo(userId: string, file: Blob, fileName: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) throw new Error('Not authorized to upload for this user');
+
+    // SECURITY: Strict file type and size validation
+    const fileError = validateFile({ size: file.size, type: file.type }, FILE_LIMITS.VIDEO);
+    if (fileError) throw new Error(fileError);
+
+    const safeFileName = sanitizeFileName(fileName);
+    const filePath = `${userId}/videos/${safeFileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('photos') // Reusing the same public authenticated bucket structure permitted by RLS
+      .upload(filePath, file, { contentType: 'video/mp4', upsert: true });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('photos')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  },
+
   async deletePhoto(filePath: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // SECURITY: Ensure the user can only delete their own photos
+    if (!filePath.startsWith(`${user.id}/`)) {
+      throw new Error('Not authorized to delete this photo');
+    }
+
     const { error } = await supabase.storage
       .from('photos')
       .remove([filePath]);

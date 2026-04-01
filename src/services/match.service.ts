@@ -7,6 +7,7 @@ import {
   PaginatedResponse,
   Profile
 } from '@/types';
+import { sanitizeText } from '@/utils/sanitizer';
 
 class MatchService {
   async getDiscoveryProfiles(limit: number = 10, offset: number = 0): Promise<DiscoveryResponse> {
@@ -61,7 +62,7 @@ class MatchService {
         from_user_id: user.id,
         to_user_id: userId,
         type,
-        note,
+        note: note ? sanitizeText(note, 500) : null,
       })
       .select()
       .single();
@@ -174,13 +175,17 @@ class MatchService {
   async unlockStage(matchId: string): Promise<Match> {
     const stages = ['text', 'voice', 'video'];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: match, error: fetchError } = await supabase
       .from('matches')
       .select('*')
       .eq('id', matchId)
+      .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`) // SECURITY: IDOR prevention
       .single();
 
-    if (fetchError) throw new Error(fetchError.message);
+    if (fetchError || !match) throw new Error('Not authorized or match not found');
 
     const currentIndex = stages.indexOf(match.unlocked_stage);
     const nextStage = stages[Math.min(currentIndex + 1, stages.length - 1)];
@@ -219,6 +224,9 @@ class MatchService {
     }
 
     if (targetStage !== match.unlocked_stage) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return match;
+
       const { data, error } = await supabase
         .from('matches')
         .update({
@@ -226,6 +234,7 @@ class MatchService {
           updated_at: new Date().toISOString()
         })
         .eq('id', match.id)
+        .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`) // SECURITY: Prevent unauthorized upgrades
         .select()
         .single();
 

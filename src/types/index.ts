@@ -115,6 +115,8 @@ export interface GameData {
   turn_id: string;
   winner_id?: string | 'draw';
   is_finished: boolean;
+  player_x?: string;
+  player_o?: string;
 }
 
 export interface CallSession {
@@ -339,7 +341,14 @@ export type AnalyticsEvent =
   | { name: 'safety_auto_alert_sent'; properties: { checkin_id: string } }
   | { name: 'sos_triggered'; properties: { checkin_id: string } }
   | { name: 'date_suggestion_shared'; properties: { suggestion_id: string } }
-  | { name: 'subscription_upgraded'; properties: { tier: SubscriptionTier } };
+  | { name: 'subscription_upgraded'; properties: { tier: SubscriptionTier } }
+  | { name: 'auth_attempt'; properties: { email: string } }
+  | { name: 'auth_success'; properties: { email: string } }
+  | { name: 'auth_failed'; properties: { email: string; reason: string } }
+  | { name: 'api_error'; properties: { url: string | undefined; status: number | undefined; message: string } }
+  | { name: 'unauthorized_access_attempt'; properties: { url: string | undefined; status: number | undefined } }
+  | { name: 'unusual_traffic_detected'; properties: { url: string | undefined; status: number | undefined; type: string } }
+  | { name: 'bot_behavior_detected'; properties: { reason: string; url?: string } };
 
 // Form Validation Types
 export interface ValidationError {

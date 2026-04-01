@@ -50,6 +50,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             matchId={message.match_id}
             gameData={message.game_data}
             isOwnTurn={message.game_data.turn_id === currentUserId}
+            currentUserId={currentUserId}
             onMove={(newState: string[]) => {
               onMove?.(newState);
             }}

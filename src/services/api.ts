@@ -3,10 +3,18 @@ import { API_ENDPOINTS, ERROR_MESSAGES } from '@/utils/constants';
 import { ApiError, ApiResponse } from '@/types';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import { analyticsService } from './analytics.service';
+import { rateLimiter } from '@/utils/rateLimiter';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || Constants.expoConfig?.extra?.apiBaseUrl || 'https://api.areyoutheone.app/api/1.1';
-const API_KEY = process.env.EXPO_PUBLIC_API_KEY || Constants.expoConfig?.extra?.laravelApiKey || '';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.areyoutheone.app/api/1.1';
+const API_KEY = process.env.EXPO_PUBLIC_LARAVEL_API_KEY || '';
 const API_TIMEOUT = 30000;
+
+// SECURITY: Enforce HTTPS in production environments
+if (!__DEV__ && API_BASE_URL && API_BASE_URL.startsWith('http://')) {
+  console.error('SECURITY FATAL: Insecure HTTP connections are strictly prohibited in production.');
+  throw new Error('Insecure HTTP connects prohibited.');
+}
 
 class ApiService {
   private client: AxiosInstance;
@@ -29,6 +37,18 @@ class ApiService {
   private setupInterceptors() {
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
+        // SECURITY: Local API Throttling to intercept looping bot scraping scripts
+        try {
+          const isAiRequest = config.url?.includes('/ai') || config.url?.includes('/generate');
+          await rateLimiter.checkLimit(isAiRequest ? 'AI_GENERATE' : 'API_GLOBAL', 'session_ip');
+        } catch (e: any) {
+          analyticsService.track('bot_behavior_detected', { 
+            reason: 'Frontend client-side rate limit fired', 
+            url: config.url 
+          });
+          return Promise.reject(new Error(e.message || 'Rate limit block exception'));
+        }
+
         const token = await this.getAccessToken();
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -127,6 +147,20 @@ class ApiService {
   }
 
   private handleError(error: AxiosError): ApiError {
+    // SECURITY: Log APIs errors, detect unauthorized access, and flag unusual traffic
+    if (!__DEV__) {
+      const status = error.response?.status;
+      const url = error.config?.url;
+
+      if (status === 429) {
+        analyticsService.track('unusual_traffic_detected', { url, status, type: 'rate_limited' });
+      } else if (status === 401 || status === 403) {
+        analyticsService.track('unauthorized_access_attempt', { url, status });
+      } else {
+        analyticsService.track('api_error', { url, status, message: error.message });
+      }
+    }
+
     if (error.response) {
       const data = error.response.data as any;
       return {
