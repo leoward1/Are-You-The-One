@@ -294,10 +294,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
               />
 
               <Text style={styles.tosText}>
-                By tapping "{isLoading ? 'Creating account...' : 'Create Account'}", you agree to our{' '}
-                <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/terms')}>Terms of Service</Text>
-                {' '}and{' '}
-                <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/privacy')}>Privacy Policy</Text>.
+                By tapping "{isLoading ? 'Creating account...' : 'Create Account'}", you agree to our <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/terms')}>Terms of Service</Text> and <Text style={styles.tosLink} onPress={() => Linking.openURL('https://areyoutheone.app/privacy')}>Privacy Policy</Text>.
               </Text>
 
               <Button

@@ -1,12 +1,19 @@
-import { createClient } from '@segment/analytics-react-native';
+// Lazy load Segment to prevent crash on module import
+let createClient: any = null;
+try {
+  createClient = require('@segment/analytics-react-native').createClient;
+} catch (e) {
+  console.warn('Segment analytics not available:', e);
+}
+
 import { AnalyticsEvent } from '../types';
-import Constants from 'expo-constants';
 
-// SECURITY: Validate segment key is real before initializing
 const segmentWriteKey = process.env.EXPO_PUBLIC_SEGMENT_WRITE_KEY || '';
-const isValidKey = segmentWriteKey && segmentWriteKey !== 'SEGMENT_WRITE_KEY_HERE' && segmentWriteKey !== 'WRITE_KEY_HERE';
+const isValidKey = segmentWriteKey && 
+  segmentWriteKey !== 'SEGMENT_WRITE_KEY_HERE' && 
+  segmentWriteKey !== 'WRITE_KEY_HERE';
 
-const segmentClient = isValidKey
+const segmentClient = (isValidKey && createClient)
   ? createClient({
       writeKey: segmentWriteKey,
       trackAppLifecycleEvents: true,

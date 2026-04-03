@@ -527,19 +527,19 @@ export default function SubscriptionScreen({ navigation }: SubscriptionScreenPro
             <View style={styles.quickFeatures}>
               <View style={styles.quickFeatureItem}>
                 <Text style={styles.quickFeatureIcon}>🌹</Text>
-                <Text style={styles.quickFeatureLabel}>Send Roses{'\n'}& Kisses</Text>
+                <Text style={styles.quickFeatureLabel}>{"Send Roses\n& Kisses"}</Text>
               </View>
               <View style={styles.quickFeatureItem}>
                 <Text style={styles.quickFeatureIcon}>🚀</Text>
-                <Text style={styles.quickFeatureLabel}>Profile{'\n'}Boost</Text>
+                <Text style={styles.quickFeatureLabel}>{"Profile\nBoost"}</Text>
               </View>
               <View style={styles.quickFeatureItem}>
                 <Text style={styles.quickFeatureIcon}>👀</Text>
-                <Text style={styles.quickFeatureLabel}>See Who{'\n'}Liked You</Text>
+                <Text style={styles.quickFeatureLabel}>{"See Who\nLiked You"}</Text>
               </View>
               <View style={styles.quickFeatureItem}>
                 <Text style={styles.quickFeatureIcon}>🎙️</Text>
-                <Text style={styles.quickFeatureLabel}>Instant{'\n'}Unlocks</Text>
+                <Text style={styles.quickFeatureLabel}>{"Instant\nUnlocks"}</Text>
               </View>
             </View>
           </SafeAreaView>
@@ -641,8 +641,7 @@ export default function SubscriptionScreen({ navigation }: SubscriptionScreenPro
             <Text style={styles.restoreText}>Restore Purchases</Text>
           </TouchableOpacity>
           <Text style={styles.legalText}>
-            Payment will be charged to your {Platform.OS === 'ios' ? 'Apple ID' : 'Google'} account.
-            {'\n'}By purchasing you agree to our Terms of Service.
+            Payment will be charged to your {Platform.OS === 'ios' ? 'Apple ID' : 'Google'} account.{"\n"}By purchasing you agree to our Terms of Service.
           </Text>
         </View>
 
