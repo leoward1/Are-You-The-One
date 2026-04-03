@@ -12,10 +12,14 @@ const ExpoSecureStoreAdapter = {
 // Read from expo-constants (set via app.json extra block)
 // SECURITY: No hardcoded fallback — app will fail visibly if keys are missing
 const supabaseUrl: string =
-  process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+  process.env.EXPO_PUBLIC_SUPABASE_URL || 
+  Constants.expoConfig?.extra?.supabaseUrl || 
+  '';
 
 const supabaseAnonKey: string =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+  Constants.expoConfig?.extra?.supabaseAnonKey || 
+  '';
 
 if (__DEV__) {
   console.log('Supabase URL:', supabaseUrl ? '✅ loaded' : '❌ MISSING');

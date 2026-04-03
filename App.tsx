@@ -51,16 +51,7 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-          <NavigationContainer onReady={() => {
-            SplashScreen.hideAsync();
-          }}>
-            <RootNavigator />
-          </NavigationContainer>
-        <StatusBar style="auto" />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <GestureHandlerRootView style={styles.container}><SafeAreaProvider><NavigationContainer onReady={() => { SplashScreen.hideAsync(); }}><RootNavigator /></NavigationContainer><StatusBar style="auto" /></SafeAreaProvider></GestureHandlerRootView>
   );
 }
 
