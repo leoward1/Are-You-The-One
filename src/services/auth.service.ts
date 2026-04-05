@@ -195,6 +195,10 @@ class AuthService {
       { table: 'user_preferences', column: 'user_id' },
       { table: 'subscriptions', column: 'user_id' },
       { table: 'photos', column: 'user_id' },
+      { table: 'credit_transactions', column: 'user_id' },
+      { table: 'user_credits', column: 'user_id' },
+      { table: 'blocked_users', column: 'blocker_id' },
+      { table: 'blocked_users', column: 'blocked_id' },
     ];
 
     for (const { table, column } of tablesToPurge) {

@@ -1,3 +1,5 @@
+import { Dimensions } from 'react-native';
+
 export const COLORS = {
   primary: '#8B1538', // Burgundy from logo
   secondary: '#C41E3A', // Lighter burgundy/red
@@ -87,8 +89,9 @@ export const SHADOWS = {
   },
 };
 
-export const SCREEN_WIDTH = 375;
-export const SCREEN_HEIGHT = 812;
+const { width, height } = Dimensions.get('window');
+export const SCREEN_WIDTH = width;
+export const SCREEN_HEIGHT = height;
 
 export const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 export const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;

@@ -57,7 +57,7 @@ class ErrorBoundary extends Component<
           <Text style={errorStyles.subtitle}>
             We hit an unexpected error. Please try again.
           </Text>
-          <Text style={errorStyles.devError}>{this.state.errorMessage}</Text>
+          {__DEV__ && <Text style={errorStyles.devError}>{this.state.errorMessage}</Text>}
           <TouchableOpacity
             style={errorStyles.button}
             onPress={this.handleReset}
@@ -128,10 +128,16 @@ function AppNavigator() {
       {!isAuthenticated ? (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       ) : !isOnboarded ? (
-        <Stack.Screen name="Auth" component={AuthNavigator} initialParams={{ screen: 'Onboarding' }} />
+        <>
+          <Stack.Screen name="Auth" component={AuthNavigator} initialParams={{ screen: 'Onboarding' }} />
+          <Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
+        </>
       ) : (
-        <Stack.Screen name="Main" component={MainNavigator} />
-      )}<Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
+        <>
+          <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
+        </>
+      )}
     </Stack.Navigator>
   );
 }

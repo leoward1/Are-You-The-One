@@ -12,7 +12,7 @@ interface ChatState {
   sendMessage: (data: SendMessageData) => Promise<void>;
   addOptimisticMessage: (matchId: string, message: Message) => void;
   updateMessage: (matchId: string, tempId: string, message: Message) => void;
-  markAsRead: (matchId: string) => void;
+  markAsRead: (matchId: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -82,7 +82,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 
-  markAsRead: (matchId) => {
+  markAsRead: async (matchId) => {
     const { unreadCounts } = get();
     set({
       unreadCounts: {
@@ -90,6 +90,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         [matchId]: 0,
       },
     });
+    try {
+      await chatService.markAsRead(matchId);
+    } catch (error: any) {
+      console.error('Failed to persist read status:', error);
+    }
   },
 
   clearError: () => set({ error: null }),

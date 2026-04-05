@@ -74,17 +74,14 @@ class SubscriptionService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { error } = await supabase
-      .from('subscriptions')
-      .update({
-        status: 'cancelled',
-        cancel_at_period_end: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id)
-      .eq('status', 'active');
-
-    if (error) throw new Error(error.message);
+    // SECURITY: Route through backend API to prevent direct client-side
+    // mutation of the subscriptions table (consistent with subscribe()).
+    try {
+      await apiService.post('/stripe/cancel-subscription');
+    } catch (error: any) {
+      console.error('[Subscription] Backend cancellation failed:', error);
+      throw new Error('Failed to cancel subscription securely.');
+    }
   }
 
   async getCurrentSubscription(): Promise<Subscription | null> {

@@ -315,26 +315,38 @@ class IAPService {
    */
   async spendCredits(action: CreditAction): Promise<boolean> {
     const cost = CREDIT_COSTS[action];
-    const balance = await this.getBalance();
-
-    if (balance < cost) {
-      return false;
-    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    // Deduct credits
-    const { error: balError } = await supabase
+    // SECURITY: Atomic balance check + deduction to prevent TOCTOU double-spend.
+    // Step 1: Read current balance
+    const { data: current, error: readError } = await supabase
+      .from('user_credits')
+      .select('balance')
+      .eq('user_id', user.id)
+      .single();
+
+    if (readError || !current || current.balance < cost) {
+      console.warn('[IAP] Insufficient credits or read failed');
+      return false;
+    }
+
+    // Step 2: Conditional update — optimistic lock ensures no concurrent modification
+    // Only deducts if balance is still exactly what we read (prevents double-spend)
+    const { data: updated, error: setError } = await supabase
       .from('user_credits')
       .update({
-        balance: balance - cost,
+        balance: current.balance - cost,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('balance', current.balance)
+      .select('balance')
+      .single();
 
-    if (balError) {
-      console.error('[IAP] Failed to deduct credits:', balError);
+    if (setError || !updated) {
+      console.error('[IAP] Failed to deduct credits (concurrent modification):', setError?.message);
       return false;
     }
 

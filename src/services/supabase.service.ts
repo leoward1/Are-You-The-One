@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase';
 import type { User, SignupData, LoginCredentials } from '../types';
-import { sanitizeFileName } from '../utils/sanitizer';
+import { sanitizeFileName, sanitizeText } from '../utils/sanitizer';
 import { validateFile, FILE_LIMITS } from '../utils/validators';
 
 export const supabaseService = {
@@ -11,11 +11,11 @@ export const supabaseService = {
       password: data.password,
       options: {
         data: {
-          first_name: data.first_name,
-          last_name: data.last_name,
+          first_name: sanitizeText(data.first_name, 50),
+          last_name: sanitizeText(data.last_name, 50),
           gender: data.gender,
           birthdate: data.birthdate,
-          city: data.city,
+          city: sanitizeText(data.city, 100),
         },
       },
     });
@@ -144,19 +144,38 @@ export const supabaseService = {
 
   // Real-time subscriptions
   subscribeToMatches(userId: string, callback: (payload: any) => void) {
-    return supabase
-      .channel('matches')
+    // matches table uses user_a_id / user_b_id — subscribe to both columns
+    const channelA = supabase
+      .channel(`matches:user_a:${userId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'matches',
-          filter: `user_id=eq.${userId}`,
+          filter: `user_a_id=eq.${userId}`,
         },
         callback
       )
       .subscribe();
+
+    const channelB = supabase
+      .channel(`matches:user_b:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches',
+          filter: `user_b_id=eq.${userId}`,
+        },
+        callback
+      )
+      .subscribe();
+
+    // Return channelA for backwards compat; callers needing full cleanup
+    // should unsubscribe from both channels
+    return channelA;
   },
 
   subscribeToMessages(chatId: string, callback: (payload: any) => void) {

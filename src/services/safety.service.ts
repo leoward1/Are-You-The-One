@@ -47,6 +47,7 @@ class SafetyService {
         match_id: matchId,
         meeting_with: partnerName,
         expected_end: expectedEnd.toISOString(),
+        auto_alert_minutes: 120,
         status: 'active',
         is_date_mode: true,
       })

@@ -32,17 +32,26 @@ class MatchService {
 
     if (error) throw new Error(error.message);
 
-    // Fetch photos for each profile
-    const profilesWithPhotos = await Promise.all(
-      (profiles || []).map(async (profile: any) => {
-        const { data: photos } = await supabase
+    // Batch-fetch all photos for discovered profiles in a single query
+    const profileIds = (profiles || []).map((p: any) => p.id);
+    const { data: allPhotos } = profileIds.length > 0
+      ? await supabase
           .from('photos')
           .select('*')
-          .eq('user_id', profile.id)
-          .order('position');
-        return { ...profile, photos: photos || [] };
-      })
-    );
+          .in('user_id', profileIds)
+          .order('position')
+      : { data: [] };
+
+    const photosByUser = (allPhotos || []).reduce((acc: Record<string, any[]>, photo: any) => {
+      if (!acc[photo.user_id]) acc[photo.user_id] = [];
+      acc[photo.user_id].push(photo);
+      return acc;
+    }, {});
+
+    const profilesWithPhotos = (profiles || []).map((profile: any) => ({
+      ...profile,
+      photos: photosByUser[profile.id] || [],
+    }));
 
     return {
       profiles: profilesWithPhotos as Profile[],
@@ -134,34 +143,48 @@ class MatchService {
     const { data: matches, error, count } = await query;
     if (error) throw new Error(error.message);
 
-    // Fetch the other user's profile for each match
-    const matchesWithProfiles = await Promise.all(
-      (matches || []).map(async (matchItem: any) => {
-        const otherUserId = matchItem.user_a_id === user.id ? matchItem.user_b_id : matchItem.user_a_id;
-        const { data: otherProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', otherUserId)
-          .single();
-
-        const { data: photos } = await supabase
-          .from('photos')
-          .select('*')
-          .eq('user_id', otherUserId)
-          .order('position');
-
-        // Extract counts from the nested objects Supabase returns for counts
-        const msgCount = matchItem.message_count?.[0]?.count || 0;
-        const callCount = matchItem.voice_call_count?.[0]?.count || 0;
-
-        return {
-          ...matchItem,
-          message_count: msgCount,
-          voice_call_count: callCount,
-          matched_user: { ...otherProfile, photos: photos || [] },
-        };
-      })
+    // Batch-fetch other users' profiles and photos to avoid N+1 queries
+    const otherUserIds = (matches || []).map((m: any) =>
+      m.user_a_id === user.id ? m.user_b_id : m.user_a_id
     );
+
+    const uniqueOtherIds = [...new Set(otherUserIds)];
+
+    const [{ data: allProfiles }, { data: allPhotos }] = await Promise.all([
+      uniqueOtherIds.length > 0
+        ? supabase.from('profiles').select('*').in('id', uniqueOtherIds)
+        : { data: [] },
+      uniqueOtherIds.length > 0
+        ? supabase.from('photos').select('*').in('user_id', uniqueOtherIds).order('position')
+        : { data: [] },
+    ]);
+
+    const profilesById = (allProfiles || []).reduce((acc: Record<string, any>, p: any) => {
+      acc[p.id] = p;
+      return acc;
+    }, {});
+
+    const photosByUser = (allPhotos || []).reduce((acc: Record<string, any[]>, photo: any) => {
+      if (!acc[photo.user_id]) acc[photo.user_id] = [];
+      acc[photo.user_id].push(photo);
+      return acc;
+    }, {});
+
+    const matchesWithProfiles = (matches || []).map((matchItem: any) => {
+      const otherUserId = matchItem.user_a_id === user.id ? matchItem.user_b_id : matchItem.user_a_id;
+      const otherProfile = profilesById[otherUserId] || null;
+
+      // Extract counts from the nested objects Supabase returns for counts
+      const msgCount = matchItem.message_count?.[0]?.count || 0;
+      const callCount = matchItem.voice_call_count?.[0]?.count || 0;
+
+      return {
+        ...matchItem,
+        message_count: msgCount,
+        voice_call_count: callCount,
+        matched_user: otherProfile ? { ...otherProfile, photos: photosByUser[otherUserId] || [] } : null,
+      };
+    });
 
     return {
       data: matchesWithProfiles as Match[],
