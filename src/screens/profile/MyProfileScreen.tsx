@@ -122,7 +122,8 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
 
-            <View style={styles.divider} />            <TouchableOpacity
+            <View style={styles.divider} />
+            <TouchableOpacity
               style={styles.menuItem}
               onPress={() => navigation.navigate('HelpSupport')}
             >

@@ -97,14 +97,14 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
           <Text
             style={[
               styles.conversationSnippet,
-              item.unread_count && item.unread_count > 0 ? styles.unreadSnippet : {},
+              item.unread_count != null && item.unread_count > 0 ? styles.unreadSnippet : {},
             ]}
             numberOfLines={1}
           >
             {item.last_message?.from_user_id === item.user_a_id ? 'You: ' : ''}
             {truncateText(item.last_message?.content || '', 40)}
           </Text>
-          {item.unread_count && item.unread_count > 0 ? (
+          {item.unread_count != null && item.unread_count > 0 ? (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadCount}>{item.unread_count}</Text>
             </View>
