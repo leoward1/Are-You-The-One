@@ -8,7 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#8B1538"
     },
@@ -26,7 +26,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "26"
+      "buildNumber": "27"
     },
     "android": {
       "package": "com.areyoutheone.app",
@@ -51,7 +51,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#8B1538",
-          "image": "./assets/splash.png"
+          "image": "./assets/icon.png",
+          "imageWidth": 280
         }
       ],
       "expo-secure-store",

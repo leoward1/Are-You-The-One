@@ -125,18 +125,17 @@ function AppNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
+      {!isAuthenticated && (
         <Stack.Screen name="Auth" component={AuthNavigator} />
-      ) : !isOnboarded ? (
-        <>
-          <Stack.Screen name="Auth" component={AuthNavigator} initialParams={{ screen: 'Onboarding' }} />
-          <Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Main" component={MainNavigator} />
-          <Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
-        </>
+      )}
+      {isAuthenticated && !isOnboarded && (
+        <Stack.Screen name="Auth" component={AuthNavigator} initialParams={{ screen: 'Onboarding' }} />
+      )}
+      {isAuthenticated && isOnboarded && (
+        <Stack.Screen name="Main" component={MainNavigator} />
+      )}
+      {isAuthenticated && (
+        <Stack.Screen name="VideoIntroCamera" component={VideoIntroScreen} options={{ presentation: 'fullScreenModal' }} />
       )}
     </Stack.Navigator>
   );
