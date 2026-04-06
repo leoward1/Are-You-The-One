@@ -52,7 +52,7 @@ export const validateName = (name: string, fieldName: string = 'Name'): string |
     return `${fieldName} must be less than ${MAX_LENGTHS.NAME} characters`;
   }
   // Prevent common injection characters in names
-  if (/[<>{}()[\]\\/_|]/.test(trimmed)) {
+  if (/[<>{}()[\]\\/_|"']/.test(trimmed)) {
     return `${fieldName} contains invalid characters`;
   }
   return null;

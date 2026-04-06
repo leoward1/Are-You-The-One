@@ -33,8 +33,8 @@ export default function HelpSupportScreen() {
   ];
 
   const handleContactSupport = () => {
-    Linking.openURL('mailto:support@areyoutheone.com').catch(() => {
-      Alert.alert('Error', 'Unable to open mail app. Please email us at support@areyoutheone.com');
+    Linking.openURL('mailto:areyoutheoneadmin@gmail.com').catch(() => {
+      Alert.alert('Error', 'Unable to open mail app. Please email us at areyoutheoneadmin@gmail.com');
     });
   };
 

@@ -26,8 +26,10 @@ export const sanitizeText = (text: string | null | undefined, maxLength: number 
   return sanitized;
 };
 
+const DANGEROUS_EXTENSIONS = /\.(php|js|ts|jsx|tsx|sh|bash|py|rb|pl|exe|bat|cmd|ps1|html|htm|svg|xml|sql|env)$/i;
+
 /**
- * Sanitizes a filename to prevent path traversal attacks.
+ * Sanitizes a filename to prevent path traversal attacks and dangerous extensions.
  */
 export const sanitizeFileName = (fileName: string): string => {
   // Remove any path traversal characters (/, \, ..)
@@ -36,6 +38,9 @@ export const sanitizeFileName = (fileName: string): string => {
   
   // Remove any non-alphanumeric (plus dot, dash, underscore) characters
   sanitized = sanitized.replace(/[^a-zA-Z0-9._-]/g, '');
+  
+  // Strip dangerous executable/script extensions
+  sanitized = sanitized.replace(DANGEROUS_EXTENSIONS, '.bin');
   
   // Ensure it's not too long
   if (sanitized.length > 255) {
