@@ -15,6 +15,7 @@ import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Card } from '../../components/ui';
 import { safetyService } from '../../services/safety.service';
 import { useAuthStore } from '../../store/useAuthStore';
+import { supabase } from '../../config/supabase';
 
 type SafetyDashboardScreenProps = {
   navigation: NativeStackNavigationProp<SafetyStackParamList, 'SafetyDashboard'>;
@@ -25,6 +26,28 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
   const [hasActiveCheckin, setHasActiveCheckin] = useState(false);
   const [activeCheckinId, setActiveCheckinId] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [emergencyContact, setEmergencyContact] = useState<{
+    email: string; phone: string;
+  }>({ email: '', phone: '' });
+
+  useEffect(() => {
+    loadEmergencyContact();
+  }, []);
+
+  const loadEmergencyContact = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_settings')
+      .select('emergency_contact_email, emergency_contact_phone')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (data) {
+      setEmergencyContact({
+        email: data.emergency_contact_email || '',
+        phone: data.emergency_contact_phone || '',
+      });
+    }
+  };
 
   // FIX: Real 911 emergency call using Linking
   const handleEmergency = () => {
@@ -54,11 +77,11 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
       expectedEnd.setHours(expectedEnd.getHours() + 1);
 
       const checkin = await safetyService.startCheckin({
-        meeting_with: user?.id || '',
+        meeting_with: user?.first_name || 'Me',
         expected_end: expectedEnd.toISOString(),
         auto_alert_minutes: 15,
-        emergency_contact_email: user?.settings?.emergency_contact_email || '',
-        emergency_contact_phone: user?.settings?.emergency_contact_phone || '',
+        emergency_contact_email: emergencyContact.email,
+        emergency_contact_phone: emergencyContact.phone,
       });
 
       setActiveCheckinId(checkin.id);

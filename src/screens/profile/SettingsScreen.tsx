@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
+import { supabase } from '../../config/supabase';
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
@@ -13,7 +14,7 @@ type SettingsScreenProps = {
 };
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const [settings, setSettings] = useState({
     notifications: {
       newMatches: true,
@@ -29,19 +30,68 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     },
     discovery: {
       showMe: true,
-      ageRange: { min: 18, max: 35 },
-      distance: 50,
     },
   });
 
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_settings')
+      .select('notify_new_matches,notify_messages,notify_roses,notify_kisses,notify_safety,show_online,show_distance,incognito_mode,show_in_discovery')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (data) {
+      setSettings({
+        notifications: {
+          newMatches: data.notify_new_matches ?? true,
+          messages: data.notify_messages ?? true,
+          roses: data.notify_roses ?? true,
+          kisses: data.notify_kisses ?? true,
+          safetyAlerts: data.notify_safety ?? true,
+        },
+        privacy: {
+          showOnline: data.show_online ?? true,
+          showDistance: data.show_distance ?? true,
+          incognito: data.incognito_mode ?? false,
+        },
+        discovery: {
+          showMe: data.show_in_discovery ?? true,
+        },
+      });
+    }
+  };
+
+  const saveSettings = async (updated: typeof settings) => {
+    if (!user?.id) return;
+    await supabase.from('user_settings').upsert({
+      user_id: user.id,
+      notify_new_matches: updated.notifications.newMatches,
+      notify_messages: updated.notifications.messages,
+      notify_roses: updated.notifications.roses,
+      notify_kisses: updated.notifications.kisses,
+      notify_safety: updated.notifications.safetyAlerts,
+      show_online: updated.privacy.showOnline,
+      show_distance: updated.privacy.showDistance,
+      incognito_mode: updated.privacy.incognito,
+      show_in_discovery: updated.discovery.showMe,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+  };
+
   const toggleSetting = (category: keyof typeof settings, key: string) => {
-    setSettings({
+    const updated = {
       ...settings,
       [category]: {
         ...settings[category],
         [key]: !settings[category][key as keyof typeof settings[typeof category]],
       },
-    });
+    };
+    setSettings(updated);
+    saveSettings(updated);
   };
 
   const handleLogout = () => {
@@ -147,6 +197,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             onToggle={() => toggleSetting('discovery', 'showMe')}
             isLast
           />
+
         </Card>
 
         <Text style={styles.sectionTitle}>Account</Text>
@@ -192,7 +243,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <Text style={styles.deleteButtonText}>Delete Account</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={styles.version}>Version 1.0.9</Text>
       </ScrollView>
     </SafeAreaView>
   );

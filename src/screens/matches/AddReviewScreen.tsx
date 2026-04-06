@@ -14,9 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
 import { Button, Card } from '../../components/ui';
 import { reviewService } from '../../services';
+import { useAuthStore } from '../../store';
 
 export default function AddReviewScreen({ navigation, route }: any) {
     const { matchId, partnerName } = route.params;
+    const { user } = useAuthStore();
     const [rating, setRating] = useState(0);
     const [headline, setHeadline] = useState('');
     const [body, setBody] = useState('');
@@ -40,7 +42,7 @@ export default function AddReviewScreen({ navigation, route }: any) {
         try {
             const result = await reviewService.submitReview({
                 about_match_id: matchId,
-                from_user_id: 'CURRENT_USER_ID', // In real app, get from auth store
+                from_user_id: user?.id || '',
                 rating,
                 headline,
                 body,

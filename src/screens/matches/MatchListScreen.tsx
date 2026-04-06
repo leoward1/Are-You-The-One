@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MatchesStackParamList } from '@/navigation/MatchesNavigator';
-import { useMatchStore } from '@/store';
+import { useMatchStore, useAuthStore } from '@/store';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '@/utils/constants';
 import { formatMessageTime, truncateText } from '@/utils/formatters';
 import { Match } from '@/types';
@@ -24,6 +24,8 @@ type MatchListScreenProps = {
 
 export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   const { matches, loadMatches, isLoading } = useMatchStore();
+  const { user } = useAuthStore();
+  const currentUserId = user?.id;
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -101,7 +103,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
             ]}
             numberOfLines={1}
           >
-            {item.last_message?.from_user_id === item.user_a_id ? 'You: ' : ''}
+            {item.last_message?.from_user_id === currentUserId ? 'You: ' : ''}
             {truncateText(item.last_message?.content || '', 40)}
           </Text>
           {item.unread_count != null && item.unread_count > 0 ? (

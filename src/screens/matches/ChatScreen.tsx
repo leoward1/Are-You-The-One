@@ -10,6 +10,7 @@ import { Avatar, Button } from '../../components/ui';
 import { chatService, callService } from '../../services';
 import { useAuthStore, useMatchStore } from '../../store';
 import { Message, Match, CallSession } from '../../types';
+import { supabase } from '../../config/supabase';
 
 type ChatScreenProps = {
   route: RouteProp<MatchesStackParamList, 'Chat'>;
@@ -169,27 +170,50 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   };
 
   const handleReport = () => {
+    const otherUserId = match?.user_a_id === user?.id ? match?.user_b_id : match?.user_a_id;
     Alert.alert(
       'Report or Block',
-      `Are you sure you want to report or block ${matchName}?`,
+      `What would you like to do with ${matchName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Block User', 
+        {
+          text: 'Block User',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('User Blocked', `${matchName} has been blocked and this chat is closed.`);
-            navigation.goBack();
-          }
+          onPress: async () => {
+            try {
+              if (!user?.id || !otherUserId) return;
+              await supabase.from('blocks').upsert(
+                { blocker_id: user.id, blocked_user_id: otherUserId },
+                { onConflict: 'blocker_id,blocked_user_id' }
+              );
+              Alert.alert('Blocked', `${matchName} has been blocked.`, [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch {
+              Alert.alert('Error', 'Could not block user. Please try again.');
+            }
+          },
         },
-        { 
-          text: 'Report Profile', 
+        {
+          text: 'Report Profile',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Profile Reported', `Thank you. Our moderation team will review this conversation within 24 hours.`);
-            navigation.goBack();
-          }
-        }
+          onPress: async () => {
+            try {
+              if (!user?.id || !otherUserId) return;
+              await supabase.from('reports').insert({
+                reporter_id: user.id,
+                reported_user_id: otherUserId,
+                match_id: matchId,
+                reason: 'Reported from chat screen',
+              });
+              Alert.alert('Reported', 'Our moderation team will review this within 24 hours.', [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch {
+              Alert.alert('Error', 'Could not submit report. Please try again.');
+            }
+          },
+        },
       ]
     );
   };
