@@ -1,9 +1,12 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Animated,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '@/store';
@@ -11,6 +14,86 @@ import { useAuthStore } from '@/store';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import VideoIntroScreen from '@/screens/shared/VideoIntroScreen';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// ─── In-App Splash Screen ──────────────────────────────────────────────────
+function InAppSplash({ onDone }: { onDone: () => void }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.85)).current;
+
+  useEffect(() => {
+    // Fade + scale in
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 6, useNativeDriver: true }),
+    ]).start();
+
+    // Fade out after 2.4 seconds then call onDone
+    const timer = setTimeout(() => {
+      Animated.timing(opacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => {
+        onDone();
+      });
+    }, 2400);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <View style={splashStyles.container}>
+      <Animated.View style={[splashStyles.content, { opacity, transform: [{ scale }] }]}>
+        <Image
+          source={require('../../assets/icon.png')}
+          style={splashStyles.logo}
+          resizeMode="contain"
+        />
+        <Text style={splashStyles.title}>Are You The One</Text>
+        <Text style={splashStyles.tagline}>Where real connections begin</Text>
+      </Animated.View>
+      <Animated.Text style={[splashStyles.footer, { opacity }]}>
+        ✨ Find your perfect match
+      </Animated.Text>
+    </View>
+  );
+}
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#8B1538',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  content: {
+    alignItems: 'center',
+  },
+  logo: {
+    width: SCREEN_WIDTH * 0.55,
+    height: SCREEN_WIDTH * 0.55,
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 48,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+  },
+});
 
 export type RootStackParamList = {
   Auth: { screen?: string } | undefined;
@@ -122,6 +205,11 @@ const errorStyles = StyleSheet.create({
 function AppNavigator() {
   const { isAuthenticated, user } = useAuthStore();
   const isOnboarded = user?.is_onboarded;
+  const [splashDone, setSplashDone] = useState(false);
+
+  if (!splashDone) {
+    return <InAppSplash onDone={() => setSplashDone(true)} />;
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

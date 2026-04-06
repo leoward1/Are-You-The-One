@@ -1,37 +1,81 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, FONTS } from '../../utils/constants';
 import { Button, Input, Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
+import { supabase } from '../../config/supabase';
 
 export default function TrustedContactsScreen() {
-  const { user, updateProfile } = useAuthStore();
+  const { user } = useAuthStore();
   const [formData, setFormData] = useState({
-    name: user?.settings?.emergency_contact_name || '',
-    email: user?.settings?.emergency_contact_email || '',
-    phone: user?.settings?.emergency_contact_phone || '',
+    name: '',
+    email: '',
+    phone: '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadContact();
+  }, []);
+
+  const loadContact = async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('user_settings')
+        .select('emergency_contact_name, emergency_contact_email, emergency_contact_phone')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        setFormData({
+          name: data.emergency_contact_name || '',
+          email: data.emergency_contact_email || '',
+          phone: data.emergency_contact_phone || '',
+        });
+      }
+    } catch (e) {
+      // No existing contact yet — start with empty fields
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSave = async () => {
+    if (!user?.id) return;
+    if (!formData.name.trim()) {
+      Alert.alert('Required', 'Please enter a contact name.');
+      return;
+    }
     setIsSaving(true);
     try {
-      await updateProfile({
-        settings: {
-          ...user?.settings,
-          emergency_contact_name: formData.name,
-          emergency_contact_email: formData.email,
-          emergency_contact_phone: formData.phone,
-        },
-      } as any);
-      Alert.alert('Success', 'Trusted contact updated successfully!');
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          emergency_contact_name: formData.name.trim(),
+          emergency_contact_email: formData.email.trim(),
+          emergency_contact_phone: formData.phone.trim(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      if (error) throw new Error(error.message);
+      Alert.alert('Saved', 'Your trusted contact has been saved successfully.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update contact');
+      Alert.alert('Error', error.message || 'Failed to save contact');
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

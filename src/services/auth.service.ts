@@ -1,9 +1,14 @@
+import { Platform } from 'react-native';
 import { supabase } from '@/config/supabase';
 import { AuthResponse, LoginCredentials, SignupData, User } from '@/types';
 import { analyticsService } from './analytics.service';
-
 import { rateLimiter } from '@/utils/rateLimiter';
 import { sanitizeText } from '@/utils/sanitizer';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
 
 class AuthService {
 
@@ -235,18 +240,40 @@ class AuthService {
     }
   }
 
-  async signInWithOAuth(provider: 'google' | 'apple') {
-    // Note: On native, use signInWithIdToken or AuthSession
-    // This is the simplest OAuth redirect for Supabase + Expo
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: 'areyoutheone://auth-callback',
-      },
-    });
+  async signInWithOAuth(provider: 'google' | 'apple'): Promise<void> {
+    if (provider === 'apple') {
+      // Native Apple Sign In — works on iOS devices only
+      if (Platform.OS !== 'ios') throw new Error('Apple Sign In is only available on iOS.');
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error('Apple Sign In failed: no identity token returned.');
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) throw new Error(error.message);
+      return;
+    }
 
-    if (error) throw error;
-    return data;
+    // Google: OAuth via in-app browser with PKCE deep-link callback
+    const redirectTo = makeRedirectUri({ scheme: 'areyoutheone', path: 'auth-callback' });
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error) throw new Error(error.message);
+    if (!data.url) throw new Error('Google Sign In failed: no OAuth URL returned.');
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success') throw new Error('Google Sign In was cancelled or failed.');
+
+    // Exchange the PKCE authorization code for a Supabase session
+    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+    if (sessionError) throw new Error(sessionError.message);
   }
 
   async resetPassword(email: string): Promise<void> {

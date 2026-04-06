@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -149,19 +150,21 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
 
           <View style={styles.socialButtons}>
-            <TouchableOpacity 
-              style={styles.socialButton}
-              onPress={() => handleOAuth('apple')}
-              disabled={isLoading}
-            >
-              <Text style={styles.socialButtonText}>🍎 Apple</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
+            {Platform.OS === 'ios' && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={BORDER_RADIUS.lg}
+                style={styles.appleButton}
+                onPress={() => handleOAuth('apple')}
+              />
+            )}
+            <TouchableOpacity
               style={styles.socialButton}
               onPress={() => handleOAuth('google')}
               disabled={isLoading}
             >
-              <Text style={styles.socialButtonText}>G Google</Text>
+              <Text style={styles.socialButtonText}>G  Sign in with Google</Text>
             </TouchableOpacity>
           </View>
 
@@ -245,11 +248,14 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
   },
   socialButtons: {
-    flexDirection: 'row',
     gap: SPACING.md,
   },
+  appleButton: {
+    width: '100%',
+    height: 50,
+  },
   socialButton: {
-    flex: 1,
+    width: '100%',
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,

@@ -9,7 +9,7 @@ import { Platform, Alert } from 'react-native';
 import {
   initConnection,
   endConnection,
-  fetchProducts,
+  getProducts,
   requestPurchase,
   finishTransaction,
   purchaseUpdatedListener,
@@ -24,21 +24,24 @@ import { supabase } from '@/config/supabase';
 import { apiService } from './api';
 
 // ─── Product IDs (must match App Store Connect) ──────────────────────────
+// NOTE: 5 free starter credits are granted on signup — not sold as IAP.
+// Paid credit packs start at 15 credits ($9.99).
 export const IAP_PRODUCT_IDS = Platform.select({
   ios: [
-    'com.areyoutheone.credits.5',     // 5 credits  — $4.99
     'com.areyoutheone.credits.15',    // 15 credits — $9.99  (Save 30%)
     'com.areyoutheone.credits.50',    // 50 credits — $24.99 (Save 50%)
     'com.areyoutheone.credits.100',   // 100 credits — $39.99 (Save 60%)
   ],
   android: [
-    'com.areyoutheone.credits.5',
     'com.areyoutheone.credits.15',
     'com.areyoutheone.credits.50',
     'com.areyoutheone.credits.100',
   ],
   default: [],
 }) as string[];
+
+// Free starter credits granted to every new user on signup
+export const FREE_STARTER_CREDITS = 5;
 
 // ─── Credit pack configuration (fallback if store prices unavailable) ────
 export interface CreditPack {
@@ -53,12 +56,6 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  {
-    productId: 'com.areyoutheone.credits.5',
-    credits: 5,
-    price: '$4.99',
-    priceValue: 4.99,
-  },
   {
     productId: 'com.areyoutheone.credits.15',
     credits: 15,
@@ -141,7 +138,7 @@ class IAPService {
       this.purchaseErrorSubscription = purchaseErrorListener(
         (error: PurchaseError) => {
           console.warn('[IAP] Purchase error:', error);
-          if (error.code !== ErrorCode.UserCancelled) {
+          if (error.code !== ErrorCode.E_USER_CANCELLED) {
             Alert.alert(
               'Purchase Failed',
               error.message || 'Something went wrong. Please try again.'
@@ -183,16 +180,16 @@ class IAPService {
         await this.initialize();
       }
 
-      const products = await fetchProducts({ skus: IAP_PRODUCT_IDS, type: 'in-app' }) as Product[];
+      const products = await getProducts({ skus: IAP_PRODUCT_IDS }) as Product[];
       console.log('[IAP] Fetched products:', products.length);
 
       // Merge store products with our local config
       return CREDIT_PACKS.map((pack) => {
-        const storeProduct = products.find((p) => p.id === pack.productId);
+        const storeProduct = products.find((p) => p.productId === pack.productId);
         if (storeProduct) {
           return {
             ...pack,
-            price: storeProduct.displayPrice || pack.price,
+            price: storeProduct.localizedPrice || pack.price,
             priceValue: Number(storeProduct.price) || pack.priceValue,
             storeProduct,
           };
@@ -215,16 +212,10 @@ class IAPService {
         await this.initialize();
       }
 
-      await requestPurchase({
-        type: 'in-app',
-        request: {
-          apple: { sku: productId },
-          google: { skus: [productId] },
-        }
-      });
+      await requestPurchase({ sku: productId });
       // The purchaseUpdatedListener will handle the rest
     } catch (err: any) {
-      if (err.code === ErrorCode.UserCancelled) {
+      if (err.code === ErrorCode.E_USER_CANCELLED) {
         console.log('[IAP] User cancelled purchase');
         return;
       }

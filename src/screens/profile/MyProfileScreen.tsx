@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,7 @@ import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import { useAuthStore } from '../../store';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Avatar, Card, Badge } from '../../components/ui';
+import { supabase } from '../../config/supabase';
 
 type MyProfileScreenProps = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'MyProfile'>;
@@ -14,12 +15,40 @@ type MyProfileScreenProps = {
 
 export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
   const { user } = useAuthStore();
+  const [stats, setStats] = useState([
+    { label: 'Matches', value: '—' },
+    { label: 'Roses 🌹', value: '—' },
+    { label: 'Kisses 💋', value: '—' },
+  ]);
 
-  const stats = [
-    { label: 'Matches', value: '24' },
-    { label: 'Roses Sent', value: '12' },
-    { label: 'Kisses', value: '8' },
-  ];
+  useEffect(() => {
+    if (!user?.id) return;
+    const loadStats = async () => {
+      const [matchesResult, rosesResult, kissesResult] = await Promise.all([
+        supabase
+          .from('matches')
+          .select('id', { count: 'exact', head: true })
+          .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
+          .eq('status', 'matched'),
+        supabase
+          .from('likes')
+          .select('id', { count: 'exact', head: true })
+          .eq('from_user_id', user.id)
+          .eq('type', 'rose'),
+        supabase
+          .from('likes')
+          .select('id', { count: 'exact', head: true })
+          .eq('from_user_id', user.id)
+          .eq('type', 'kiss'),
+      ]);
+      setStats([
+        { label: 'Matches', value: String(matchesResult.count ?? 0) },
+        { label: 'Roses 🌹', value: String(rosesResult.count ?? 0) },
+        { label: 'Kisses 💋', value: String(kissesResult.count ?? 0) },
+      ]);
+    };
+    loadStats();
+  }, [user?.id]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

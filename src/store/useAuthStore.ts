@@ -143,6 +143,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await authService.signInWithOAuth(provider);
+      // Explicitly load the user after OAuth session is established
+      await get().loadUser();
     } catch (error: any) {
       set({
         error: error.message || 'OAuth login failed',
