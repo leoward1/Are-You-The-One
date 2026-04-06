@@ -69,25 +69,11 @@ export default function DateDetailScreen({ route, navigation }: DateDetailScreen
       const found = await dateService.getSuggestionById(suggestionId);
       setSuggestion(found);
     } catch {
-      // Fallback mock when not in DB yet
-      setSuggestion(getMockSuggestion(suggestionId));
+      setSuggestion(null);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const getMockSuggestion = (id: string): DateSuggestion => ({
-    id,
-    city: 'New York',
-    category: 'coffee',
-    name: 'The Little Owl Café',
-    address: '90 Bedford St, New York, NY 10014',
-    avg_cost: '$15–25 per person',
-    safety_rating: 5,
-    google_maps_url: 'https://maps.google.com/?q=The+Little+Owl+Cafe+New+York',
-    image_url: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800',
-    description: 'A cozy corner café in the West Village with excellent espresso, avocado toast, and a vibrant atmosphere perfect for a relaxed first date. Outdoor seating available in summer.',
-  });
 
   const handleDirections = () => {
     if (!suggestion) return;

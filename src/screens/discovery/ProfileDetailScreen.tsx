@@ -88,54 +88,25 @@ export default function ProfileDetailScreen({ route, navigation }: ProfileDetail
   const loadProfile = async () => {
     setIsLoading(true);
     try {
-      // Try fetching from discovery service (real data)
-      const discovery = await matchService.getDiscoveryProfiles(50);
-      const found = discovery.profiles.find((p) => p.user_id === userId || (p as any).id === userId);
-      if (found) {
-        setProfile(found);
+      const { supabase } = await import('../../config/supabase');
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileData) {
+        const { data: photos } = await supabase
+          .from('photos')
+          .select('*')
+          .eq('user_id', userId)
+          .order('position');
+        setProfile({ ...profileData, photos: photos || [] });
       } else {
-        // Fallback mock for demo
-        setProfile({
-          id: userId,
-          user_id: userId,
-          first_name: 'Alex',
-          age: 27,
-          city: 'New York',
-          distance_miles: 5,
-          bio: 'Adventurer at heart 🌍 Love hiking, cooking, and deep conversations over coffee. Looking for someone genuine to explore life with.',
-          interests: ['Hiking', 'Coffee', 'Travel', 'Cooking', 'Photography', 'Music'],
-          headline: 'Explorer & coffee enthusiast',
-          lifestyle_tags: ['Non-smoker', 'Social drinker', 'Dog lover', 'Gym 3x/week'],
-          height_in: 69,
-          primary_photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600',
-          photos: [
-            { id: '1', user_id: userId, url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600', is_primary: true, created_at: '' },
-            { id: '2', user_id: userId, url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600', is_primary: false, created_at: '' },
-            { id: '3', user_id: userId, url: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600', is_primary: false, created_at: '' },
-          ],
-          compatibility_pct: 87,
-        });
+        setProfile(null);
       }
     } catch {
-      // Fallback mock
-      setProfile({
-        id: userId,
-        user_id: userId,
-        first_name: 'Alex',
-        age: 27,
-        city: 'New York',
-        distance_miles: 5,
-        bio: 'Adventurer at heart 🌍 Love hiking, cooking, and deep conversations over coffee.',
-        interests: ['Hiking', 'Coffee', 'Travel', 'Cooking', 'Photography'],
-        headline: 'Explorer & coffee enthusiast',
-        lifestyle_tags: ['Non-smoker', 'Dog lover'],
-        height_in: 69,
-        primary_photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600',
-        photos: [
-          { id: '1', user_id: userId, url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600', is_primary: true, created_at: '' },
-        ],
-        compatibility_pct: 87,
-      });
+      setProfile(null);
     } finally {
       setIsLoading(false);
     }
