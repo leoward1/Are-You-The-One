@@ -33,7 +33,7 @@ class SafetyService {
     return checkin as SafetyCheckin;
   }
 
-  async startDateMode(matchId: string, partnerName: string): Promise<SafetyCheckin> {
+  async startDateMode(matchId: string | null, partnerName: string): Promise<SafetyCheckin> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 

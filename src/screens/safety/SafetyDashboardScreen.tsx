@@ -106,7 +106,7 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
           onPress: async () => {
             setIsStarting(true);
             try {
-              const checkin = await safetyService.startDateMode('', 'Your Date');
+              const checkin = await safetyService.startDateMode(null as any, 'Your Date');
               setActiveCheckinId(checkin.id);
               setHasActiveCheckin(true);
               navigation.navigate('DateMode', {

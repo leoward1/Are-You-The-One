@@ -13,6 +13,7 @@ import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Button, Card } from '../../components/ui';
 import { safetyService } from '../../services/safety.service';
 import { useAuthStore } from '../../store/useAuthStore';
+import { supabase } from '../../config/supabase';
 
 export default function ActiveCheckinScreen({ navigation, route }: any) {
   // FIX: Read real checkinId from navigation params
@@ -23,9 +24,28 @@ export default function ActiveCheckinScreen({ navigation, route }: any) {
   const [locationText, setLocationText] = useState('Getting location...');
   const [isCompleting, setIsCompleting] = useState(false);
   const [isExtending, setIsExtending] = useState(false);
+  const [emergencyContact, setEmergencyContact] = useState({ name: 'Emergency Contact', phone: 'Not set' });
   const startTime = useRef(new Date());
-  const scheduledEndTime = useRef(new Date(Date.now() + 60 * 60 * 1000)); // 1 hour default
+  const scheduledEndTime = useRef(new Date(Date.now() + 60 * 60 * 1000));
   const locationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const loadContact = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('user_settings')
+        .select('emergency_contact_name, emergency_contact_phone')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        setEmergencyContact({
+          name: data.emergency_contact_name || 'Emergency Contact',
+          phone: data.emergency_contact_phone || 'Not set',
+        });
+      }
+    };
+    loadContact();
+  }, [user?.id]);
 
   // FIX: Real GPS location tracking
   useEffect(() => {
@@ -164,9 +184,7 @@ export default function ActiveCheckinScreen({ navigation, route }: any) {
     );
   };
 
-  const emergencyContacts = [
-    { name: user?.settings?.emergency_contact_name || 'Emergency Contact', phone: user?.settings?.emergency_contact_phone || 'Not set' },
-  ];
+  const emergencyContacts = [emergencyContact];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
