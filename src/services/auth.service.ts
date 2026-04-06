@@ -137,12 +137,20 @@ class AuthService {
       .eq('user_id', user.id)
       .single();
 
+    // Fetch user's video intro from videos table (links photos to video storage)
+    const { data: videoIntro } = await supabase
+      .from('videos')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     return {
       ...profile,
       email: user.email || profile.email,
       photos: photos || [],
       settings: settings || null,
       preferences: preferences || null,
+      video_intro: videoIntro?.url || profile.video_intro || null,
     } as User;
   }
 
@@ -217,6 +225,13 @@ class AuthService {
     if (files && files.length > 0) {
       const filePaths = files.map(f => `${user.id}/${f.name}`);
       await supabase.storage.from('photos').remove(filePaths);
+    }
+
+    // Delete storage (videos bucket)
+    const { data: videoFiles } = await supabase.storage.from('videos').list(user.id);
+    if (videoFiles && videoFiles.length > 0) {
+      const videoPaths = videoFiles.map(f => `${user.id}/${f.name}`);
+      await supabase.storage.from('videos').remove(videoPaths);
     }
   }
 

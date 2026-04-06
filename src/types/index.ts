@@ -360,7 +360,14 @@ export interface FormErrors {
   [key: string]: string;
 }
 
-// Upload Types
+export interface VideoIntro {
+  id: string;
+  user_id: string;
+  url: string;
+  thumbnail_url?: string;
+  duration_seconds?: number;
+  created_at: string;
+}
 export interface UploadProgress {
   loaded: number;
   total: number;

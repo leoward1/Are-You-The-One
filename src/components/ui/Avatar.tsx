@@ -15,6 +15,7 @@ interface AvatarProps {
   style?: ViewStyle;
   showOnlineIndicator?: boolean;
   isOnline?: boolean;
+  showPhotoBadge?: boolean;
 }
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -24,6 +25,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   style,
   showOnlineIndicator = false,
   isOnline = false,
+  showPhotoBadge = false,
 }) => {
   const getSize = () => {
     switch (size) {
@@ -98,6 +100,21 @@ export const Avatar: React.FC<AvatarProps> = ({
           ]}
         />
       )}
+
+      {showPhotoBadge && source && (
+        <View
+          style={[
+            styles.photoBadge,
+            {
+              width: indicatorSize * 1.4,
+              height: indicatorSize * 1.4,
+              borderRadius: (indicatorSize * 1.4) / 2,
+            },
+          ]}
+        >
+          <Text style={{ fontSize: indicatorSize * 0.7 }}>📷</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -122,6 +139,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  photoBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: COLORS.white,
   },

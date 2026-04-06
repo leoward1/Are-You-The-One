@@ -22,12 +22,12 @@ class MatchService {
 
     const excludeIds = [user.id, ...(likedIds || []).map((l: any) => l.to_user_id)];
 
-    // Fetch profiles not yet seen
+    // Fetch profiles not yet seen (only onboarded users, no verified-only gate)
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('*')
       .not('id', 'in', `(${excludeIds.join(',')})`)
-      .eq('is_verified', true)
+      .eq('is_onboarded', true)
       .range(offset, offset + limit - 1);
 
     if (error) throw new Error(error.message);

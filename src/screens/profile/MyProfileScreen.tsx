@@ -35,6 +35,7 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
               name={user?.first_name || 'User'}
               size="large"
               source={user?.photo_url}
+              showPhotoBadge
             />
             <Text style={styles.name}>
               {user?.first_name} {user?.last_name}

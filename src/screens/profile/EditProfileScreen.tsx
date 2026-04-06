@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { Video, ResizeMode } from 'expo-av';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
@@ -66,16 +68,13 @@ export default function EditProfileScreen() {
       setIsUploadingPhoto(true);
 
       try {
-        // Convert to blob for upload
-        const response = await fetch(asset.uri);
-        const blob = await response.blob();
         const fileName = `photo_${Date.now()}.jpg`;
 
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) throw new Error('Not authenticated');
 
-        // Upload to Supabase storage
-        const publicUrl = await supabaseService.uploadPhoto(authUser.id, blob, fileName);
+        // Upload to Supabase storage (passes URI — service reads via FileSystem)
+        const publicUrl = await supabaseService.uploadPhoto(authUser.id, asset.uri, fileName);
 
         // Save photo record to photos table
         await supabase.from('photos').insert({
@@ -196,13 +195,34 @@ export default function EditProfileScreen() {
 
         <Text style={styles.sectionTitle}>Video Intro</Text>
         <Text style={styles.sectionSubtitle}>Record a 30s video to stand out!</Text>
-        <TouchableOpacity
-          style={[styles.addPhotoButton, { width: '100%', marginBottom: SPACING.md }]}
-          onPress={() => navigation.navigate('VideoIntroCamera', { userId: user?.id })}
-        >
-          <Text style={styles.addPhotoIcon}>🎥</Text>
-          <Text style={styles.addPhotoText}>{user?.video_intro ? 'Update Video Intro' : 'Record Video Intro'}</Text>
-        </TouchableOpacity>
+        {user?.video_intro ? (
+          <View style={styles.videoPreviewContainer}>
+            <Video
+              source={{ uri: user.video_intro }}
+              style={styles.videoPreview}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay={false}
+              isMuted
+            />
+            <View style={styles.videoOverlay}>
+              <Text style={styles.videoPlayIcon}>▶</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.videoUpdateButton}
+              onPress={() => navigation.navigate('VideoIntroCamera', { userId: user?.id })}
+            >
+              <Text style={styles.videoUpdateText}>Update Video Intro</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.addPhotoButton, { width: '100%', marginBottom: SPACING.md }]}
+            onPress={() => navigation.navigate('VideoIntroCamera', { userId: user?.id })}
+          >
+            <Text style={styles.addPhotoIcon}>🎥</Text>
+            <Text style={styles.addPhotoText}>Record Video Intro</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.sectionTitle}>Basic Info</Text>
         <View style={styles.row}>
@@ -311,4 +331,10 @@ const styles = StyleSheet.create({
   halfWidth: { flex: 1 },
   interestsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg },
   saveButton: { marginTop: SPACING.lg },
+  videoPreviewContainer: { width: '100%', height: 200, borderRadius: BORDER_RADIUS.lg, overflow: 'hidden', marginBottom: SPACING.md, position: 'relative' },
+  videoPreview: { width: '100%', height: '100%' },
+  videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center' },
+  videoPlayIcon: { fontSize: 48, color: COLORS.white },
+  videoUpdateButton: { position: 'absolute', bottom: SPACING.sm, right: SPACING.sm, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: BORDER_RADIUS.full },
+  videoUpdateText: { color: COLORS.white, fontSize: 12, fontFamily: FONTS.medium },
 });

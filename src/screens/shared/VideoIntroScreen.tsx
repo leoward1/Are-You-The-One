@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '@/utils/constants';
 import { supabaseService } from '@/services/supabase.service';
+import { supabase } from '@/config/supabase';
 import Button from '@/components/ui/Button';
 
 // Maximum recording time in seconds
@@ -105,12 +106,21 @@ export default function VideoIntroScreen() {
     if (!videoUri || !userId) return;
     try {
       setIsUploading(true);
-      const response = await fetch(videoUri);
-      const blob = await response.blob();
       const fileName = `intro_${Date.now()}.mp4`;
       
-      const publicUrl = await supabaseService.uploadVideo(userId, blob, fileName);
+      // Pass URI directly — service reads via expo-file-system for reliable upload
+      const publicUrl = await supabaseService.uploadVideo(userId, videoUri, fileName);
+      
+      // Update profile with video_intro URL
       await supabaseService.updateUserProfile(userId, { video_intro: publicUrl });
+      
+      // Also save record to videos table for proper linking
+      await supabase.from('videos').upsert({
+        user_id: userId,
+        url: publicUrl,
+        duration_seconds: recordingTime,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
       
       Alert.alert('Success!', 'Your video intro has been saved.');
       navigation.goBack();

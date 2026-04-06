@@ -2,6 +2,8 @@ import { supabase } from '../config/supabase';
 import type { User, SignupData, LoginCredentials } from '../types';
 import { sanitizeFileName, sanitizeText } from '../utils/sanitizer';
 import { validateFile, FILE_LIMITS } from '../utils/validators';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 
 export const supabaseService = {
   // Auth methods
@@ -78,20 +80,42 @@ export const supabaseService = {
   },
 
   // Storage methods
-  async uploadPhoto(userId: string, file: Blob, fileName: string) {
+
+  // Helper: read a local file URI as an ArrayBuffer using expo-file-system
+  async readFileAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return decode(base64);
+  },
+
+  async uploadPhoto(userId: string, fileUri: string, fileName: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id !== userId) throw new Error('Not authorized to upload for this user');
 
-    // SECURITY: Strict file type and size validation
-    const fileError = validateFile({ size: file.size, type: file.type }, FILE_LIMITS.PHOTO);
-    if (fileError) throw new Error(fileError);
+    // Get file info for size validation
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    if (!fileInfo.exists) throw new Error('File not found');
+    const fileSize = (fileInfo as any).size || 0;
+
+    // SECURITY: Validate file size (type checked by extension)
+    if (fileSize > FILE_LIMITS.PHOTO.maxSizeBytes) {
+      const mb = (FILE_LIMITS.PHOTO.maxSizeBytes / (1024 * 1024)).toFixed(0);
+      throw new Error(`Photo is too large (max ${mb}MB)`);
+    }
 
     const safeFileName = sanitizeFileName(fileName);
     const filePath = `${userId}/${safeFileName}`;
 
+    // Read file as ArrayBuffer (reliable on React Native)
+    const arrayBuffer = await this.readFileAsArrayBuffer(fileUri);
+
     const { data, error } = await supabase.storage
       .from('photos')
-      .upload(filePath, file);
+      .upload(filePath, arrayBuffer, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
 
     if (error) throw error;
 
@@ -102,25 +126,39 @@ export const supabaseService = {
     return publicUrl;
   },
 
-  async uploadVideo(userId: string, file: Blob, fileName: string) {
+  async uploadVideo(userId: string, fileUri: string, fileName: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id !== userId) throw new Error('Not authorized to upload for this user');
 
-    // SECURITY: Strict file type and size validation
-    const fileError = validateFile({ size: file.size, type: file.type }, FILE_LIMITS.VIDEO);
-    if (fileError) throw new Error(fileError);
+    // Get file info for size validation
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    if (!fileInfo.exists) throw new Error('Video file not found');
+    const fileSize = (fileInfo as any).size || 0;
+
+    // SECURITY: Validate file size
+    if (fileSize > FILE_LIMITS.VIDEO.maxSizeBytes) {
+      const mb = (FILE_LIMITS.VIDEO.maxSizeBytes / (1024 * 1024)).toFixed(0);
+      throw new Error(`Video is too large (max ${mb}MB)`);
+    }
 
     const safeFileName = sanitizeFileName(fileName);
-    const filePath = `${userId}/videos/${safeFileName}`;
+    const filePath = `${userId}/${safeFileName}`;
 
+    // Read file as ArrayBuffer (reliable on React Native)
+    const arrayBuffer = await this.readFileAsArrayBuffer(fileUri);
+
+    // Upload to dedicated 'videos' bucket
     const { data, error } = await supabase.storage
-      .from('photos') // Reusing the same public authenticated bucket structure permitted by RLS
-      .upload(filePath, file, { contentType: 'video/mp4', upsert: true });
+      .from('videos')
+      .upload(filePath, arrayBuffer, {
+        contentType: 'video/mp4',
+        upsert: true,
+      });
 
     if (error) throw error;
 
     const { data: { publicUrl } } = supabase.storage
-      .from('photos')
+      .from('videos')
       .getPublicUrl(filePath);
 
     return publicUrl;
