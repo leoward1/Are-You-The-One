@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Alert,
 } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -18,6 +19,8 @@ interface VideoRecorderProps {
 }
 
 export const VideoRecorder = ({ onComplete, onCancel }: VideoRecorderProps) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -123,7 +126,7 @@ export const VideoRecorder = ({ onComplete, onCancel }: VideoRecorderProps) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',

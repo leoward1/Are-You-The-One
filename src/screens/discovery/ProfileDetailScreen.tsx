@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { DiscoveryStackParamList } from '../../navigation/DiscoveryNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { matchService } from '../../services';
 import { useAuthStore } from '../../store';
 import type { Profile, Gender } from '../../types';
@@ -43,7 +44,7 @@ function PhotoDots({ count, active }: { count: number; active: number }) {
 const dotStyles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
-  activeDot: { backgroundColor: COLORS.white, width: 20 },
+  activeDot: { backgroundColor: '#FFFFFF', width: 20 },
 });
 
 // Lifestyle / interest pill
@@ -57,17 +58,19 @@ function Pill({ label }: { label: string }) {
 
 const pillStyles = StyleSheet.create({
   pill: {
-    backgroundColor: COLORS.primary + '18',
+    backgroundColor: '#8B153818',
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: COLORS.primary + '40',
+    borderColor: '#8B153840',
   },
-  text: { fontSize: 13, fontFamily: FONTS.medium, color: COLORS.primary },
+  text: { fontSize: 13, fontFamily: FONTS.medium, color: '#8B1538' },
 });
 
 export default function ProfileDetailScreen({ route, navigation }: ProfileDetailScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { userId } = route.params;
   const { user: currentUser } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -346,7 +349,7 @@ export default function ProfileDetailScreen({ route, navigation }: ProfileDetail
 
 const PHOTO_HEIGHT = SCREEN_HEIGHT * 0.55;
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
   errorText: { fontSize: 18, fontFamily: FONTS.medium, color: COLORS.textSecondary, marginBottom: SPACING.md },

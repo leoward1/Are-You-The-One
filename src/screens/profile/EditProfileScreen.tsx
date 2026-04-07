@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { Video, ResizeMode } from 'expo-av';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { supabaseService } from '../../services/supabase.service';
@@ -22,6 +23,8 @@ import { validateName, validateBio } from '../../utils/validators';
 import { sanitizeText } from '../../utils/sanitizer';
 
 export default function EditProfileScreen() {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const navigation = useNavigation<any>();
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
@@ -314,7 +317,7 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
   sectionTitle: { fontSize: 20, fontFamily: FONTS.bold, color: COLORS.text, marginTop: SPACING.lg, marginBottom: SPACING.xs },

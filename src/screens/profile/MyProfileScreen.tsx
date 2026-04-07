@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import { useAuthStore } from '../../store';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Avatar, Card, Badge } from '../../components/ui';
 import { supabase } from '../../config/supabase';
 
@@ -14,6 +15,8 @@ type MyProfileScreenProps = {
 };
 
 export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { user } = useAuthStore();
   const [stats, setStats] = useState([
     { label: 'Matches', value: '—' },
@@ -173,7 +176,7 @@ export default function MyProfileScreen({ navigation }: MyProfileScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

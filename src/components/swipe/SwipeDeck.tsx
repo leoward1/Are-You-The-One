@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { COLORS, SPACING, FONTS, SHADOWS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, SHADOWS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { SwipeCard } from './SwipeCard';
 import type { Gender } from '../../types';
 
@@ -39,6 +40,8 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
   onEmpty,
   userGender = 'male',
 }) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleSwipeLeft = useCallback(() => {
@@ -138,7 +141,7 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',

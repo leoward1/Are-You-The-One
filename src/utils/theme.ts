@@ -1,0 +1,46 @@
+export const LIGHT_COLORS = {
+  primary: '#8B1538',
+  secondary: '#C41E3A',
+  accent: '#D4AF37',
+  white: '#FFFFFF',
+  background: '#FFFFFF',
+  backgroundDark: '#1A1A1A',
+  surface: '#F8F8F8',
+  surfaceDark: '#2A2A2A',
+  text: '#1A1A1A',
+  textSecondary: '#666666',
+  textLight: '#FFFFFF',
+  border: '#E0E0E0',
+  error: '#FF3B30',
+  success: '#34C759',
+  warning: '#FF9500',
+  info: '#007AFF',
+  rose: '#C41E3A',
+  kiss: '#8B1538',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+};
+
+export const DARK_COLORS = {
+  primary: '#8B1538',
+  secondary: '#C41E3A',
+  accent: '#D4AF37',
+  white: '#1C1C2E',
+  background: '#0D0D14',
+  backgroundDark: '#0D0D14',
+  surface: '#1A1A2E',
+  surfaceDark: '#252538',
+  text: '#F0F0FF',
+  textSecondary: '#9090AA',
+  textLight: '#FFFFFF',
+  border: '#2A2A3E',
+  error: '#FF6B6B',
+  success: '#4CD964',
+  warning: '#FFB340',
+  info: '#4DA6FF',
+  rose: '#C41E3A',
+  kiss: '#8B1538',
+  overlay: 'rgba(0, 0, 0, 0.75)',
+};
+
+export type AppColors = typeof LIGHT_COLORS;
+export type ThemeMode = 'light' | 'dark' | 'system';

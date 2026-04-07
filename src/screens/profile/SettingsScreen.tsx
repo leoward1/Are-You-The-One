@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { supabase } from '../../config/supabase';
+import { useColors } from '../../hooks/useColors';
+import { useThemeStore } from '../../store/useThemeStore';
+import type { ThemeMode } from '../../utils/theme';
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
@@ -14,7 +17,11 @@ type SettingsScreenProps = {
 };
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { logout, user } = useAuthStore();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+
   const [settings, setSettings] = useState({
     notifications: {
       newMatches: true,
@@ -127,9 +134,47 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     );
   };
 
+  const THEME_OPTIONS: { label: string; value: ThemeMode; icon: string }[] = [
+    { label: 'Light', value: 'light', icon: '☀️' },
+    { label: 'Dark', value: 'dark', icon: '🌙' },
+    { label: 'System', value: 'system', icon: '📱' },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        {/* ─── Appearance ─── */}
+        <Text style={styles.sectionTitle}>Appearance</Text>
+        <Card variant="elevated" padding="none">
+          <View style={styles.themeSection}>
+            <Text style={styles.settingLabel}>App Theme</Text>
+            <Text style={styles.settingDescription}>Choose how the app looks</Text>
+            <View style={styles.themeButtons}>
+              {THEME_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.themeButton,
+                    themeMode === opt.value && styles.themeButtonActive,
+                  ]}
+                  onPress={() => setThemeMode(opt.value)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.themeIcon}>{opt.icon}</Text>
+                  <Text style={[
+                    styles.themeLabel,
+                    themeMode === opt.value && styles.themeLabelActive,
+                  ]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Card>
+
+        {/* ─── Notifications ─── */}
         <Text style={styles.sectionTitle}>Notifications</Text>
         <Card variant="elevated" padding="none">
           <SettingRow
@@ -137,34 +182,45 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             description="Get notified when you have a new match"
             value={settings.notifications.newMatches}
             onToggle={() => toggleSetting('notifications', 'newMatches')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Messages"
             description="Get notified about new messages"
             value={settings.notifications.messages}
             onToggle={() => toggleSetting('notifications', 'messages')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Roses"
             description="Get notified when someone sends you a rose"
             value={settings.notifications.roses}
             onToggle={() => toggleSetting('notifications', 'roses')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Kisses"
             description="Get notified about kisses"
             value={settings.notifications.kisses}
             onToggle={() => toggleSetting('notifications', 'kisses')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Safety Alerts"
             description="Important safety notifications"
             value={settings.notifications.safetyAlerts}
             onToggle={() => toggleSetting('notifications', 'safetyAlerts')}
+            COLORS={COLORS}
+            styles={styles}
             isLast
           />
         </Card>
 
+        {/* ─── Privacy ─── */}
         <Text style={styles.sectionTitle}>Privacy</Text>
         <Card variant="elevated" padding="none">
           <SettingRow
@@ -172,22 +228,29 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             description="Let others see when you're online"
             value={settings.privacy.showOnline}
             onToggle={() => toggleSetting('privacy', 'showOnline')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Show Distance"
             description="Display your distance to other users"
             value={settings.privacy.showDistance}
             onToggle={() => toggleSetting('privacy', 'showDistance')}
+            COLORS={COLORS}
+            styles={styles}
           />
           <SettingRow
             label="Incognito Mode"
             description="Only people you like can see you"
             value={settings.privacy.incognito}
             onToggle={() => toggleSetting('privacy', 'incognito')}
+            COLORS={COLORS}
+            styles={styles}
             isLast
           />
         </Card>
 
+        {/* ─── Discovery ─── */}
         <Text style={styles.sectionTitle}>Discovery</Text>
         <Card variant="elevated" padding="none">
           <SettingRow
@@ -195,11 +258,13 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             description="Appear in other users' discovery feed"
             value={settings.discovery.showMe}
             onToggle={() => toggleSetting('discovery', 'showMe')}
+            COLORS={COLORS}
+            styles={styles}
             isLast
           />
-
         </Card>
 
+        {/* ─── Account ─── */}
         <Text style={styles.sectionTitle}>Account</Text>
         <Card variant="elevated" padding="none">
           <TouchableOpacity
@@ -255,9 +320,11 @@ interface SettingRowProps {
   value: boolean;
   onToggle: () => void;
   isLast?: boolean;
+  COLORS: any;
+  styles: any;
 }
 
-const SettingRow: React.FC<SettingRowProps> = ({ label, description, value, onToggle, isLast }) => (
+const SettingRow: React.FC<SettingRowProps> = ({ label, description, value, onToggle, isLast, COLORS, styles }) => (
   <>
     <View style={styles.settingRow}>
       <View style={styles.settingInfo}>
@@ -268,14 +335,14 @@ const SettingRow: React.FC<SettingRowProps> = ({ label, description, value, onTo
         value={value}
         onValueChange={onToggle}
         trackColor={{ false: COLORS.border, true: COLORS.primary }}
-        thumbColor={COLORS.white}
+        thumbColor={COLORS.textLight}
       />
     </View>
     {!isLast && <View style={styles.divider} />}
   </>
 );
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -291,6 +358,44 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     marginBottom: SPACING.md,
   },
+
+  // Theme section
+  themeSection: {
+    padding: SPACING.md,
+  },
+  themeButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  themeButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    gap: 4,
+  },
+  themeButtonActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '15',
+  },
+  themeIcon: {
+    fontSize: 22,
+  },
+  themeLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  themeLabelActive: {
+    color: COLORS.primary,
+    fontFamily: FONTS.semiBold,
+  },
+
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',

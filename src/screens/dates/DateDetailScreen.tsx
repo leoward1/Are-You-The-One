@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { DatesStackParamList } from '../../navigation/DatesNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { dateService } from '../../services';
 import { DateSuggestion } from '../../types';
 
@@ -28,7 +29,7 @@ const CATEGORY_META: Record<string, { icon: string; color: string; label: string
   museum:  { icon: '🏛️', color: '#4A6FA5', label: 'Museum & Culture' },
   park:    { icon: '🌳', color: '#3A8D5C', label: 'Parks & Outdoors' },
   dinner:  { icon: '🍽️', color: '#C0392B', label: 'Dinner & Dining' },
-  all:     { icon: '📍', color: COLORS.primary, label: 'Venue' },
+  all:     { icon: '📍', color: '#8B1538', label: 'Venue' },
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -46,7 +47,7 @@ const starStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   star: { fontSize: 18, color: '#DDD' },
   filled: { color: '#FFC107' },
-  label: { fontSize: 14, fontFamily: FONTS.semiBold, color: COLORS.text, marginLeft: 4 },
+  label: { fontSize: 14, fontFamily: FONTS.semiBold, color: '#1A1A1A', marginLeft: 4 },
 });
 
 type DateDetailScreenProps = {
@@ -55,6 +56,8 @@ type DateDetailScreenProps = {
 };
 
 export default function DateDetailScreen({ route, navigation }: DateDetailScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { suggestionId } = route.params;
   const [suggestion, setSuggestion] = useState<DateSuggestion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -223,7 +226,7 @@ export default function DateDetailScreen({ route, navigation }: DateDetailScreen
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
   errorText: { fontSize: 18, fontFamily: FONTS.medium, color: COLORS.textSecondary, marginBottom: SPACING.md },

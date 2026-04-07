@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
   ViewStyle,
   TouchableOpacity,
 } from 'react-native';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 
 interface CardProps {
   children: React.ReactNode;
@@ -22,6 +23,8 @@ export const Card: React.FC<CardProps> = ({
   variant = 'elevated',
   padding = 'medium',
 }) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const getCardStyle = (): ViewStyle[] => {
     const baseStyle: ViewStyle[] = [styles.card];
 
@@ -70,7 +73,7 @@ export const Card: React.FC<CardProps> = ({
   return <View style={[...getCardStyle(), style]}>{children}</View>;
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   card: {
     borderRadius: BORDER_RADIUS.lg,
     backgroundColor: COLORS.white,

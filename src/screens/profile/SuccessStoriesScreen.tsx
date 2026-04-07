@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '@/utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '@/utils/constants';
+import { useColors } from '@/hooks/useColors';
 import { reviewService } from '@/services/review.service';
 import { Review } from '@/types';
 import Button from '@/components/ui/Button';
 
 export default function SuccessStoriesScreen() {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const navigation = useNavigation<any>();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +125,7 @@ export default function SuccessStoriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

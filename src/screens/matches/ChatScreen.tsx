@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MatchesStackParamList } from '../../navigation/MatchesNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { MessageBubble, ChatInput } from '../../components/chat';
 import { Avatar, Button } from '../../components/ui';
 import { chatService, callService } from '../../services';
@@ -18,6 +19,8 @@ type ChatScreenProps = {
 };
 
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { matchId, matchName } = route.params;
   const { user } = useAuthStore();
   const { matches, checkAndUpgradeUnlockStage } = useMatchStore();
@@ -312,7 +315,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

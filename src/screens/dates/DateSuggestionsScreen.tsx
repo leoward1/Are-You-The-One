@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS, DATE_CATEGORIES } from '../../utils/constants';
+import { SPACING, FONTS, DATE_CATEGORIES } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { dateService, chatService } from '../../services';
 import { DateSuggestion, DateCategory } from '../../types';
 import { DateSuggestionCard } from '../../components/dates';
@@ -9,6 +10,8 @@ import { useAuthStore } from '../../store';
 import { Button } from '../../components/ui';
 
 export default function DateSuggestionsScreen({ navigation, route }: any) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { user } = useAuthStore();
   const [suggestions, setSuggestions] = useState<DateSuggestion[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<DateCategory>('all');
@@ -115,7 +118,7 @@ export default function DateSuggestionsScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

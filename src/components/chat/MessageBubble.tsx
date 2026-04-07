@@ -1,5 +1,7 @@
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { TicTacToe } from './games/TicTacToe';
 
 interface MessageBubbleProps {
@@ -26,6 +28,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   showTimestamp = true,
   onMove,
 }) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -70,7 +74,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     marginVertical: SPACING.xs,
     maxWidth: '80%',

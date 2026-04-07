@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   TextInput,
@@ -8,7 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -31,6 +32,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   placeholder = 'Type a message...',
   disabled = false,
 }) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [message, setMessage] = useState('');
   const [showActions, setShowActions] = useState(false);
 
@@ -117,7 +120,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-end',

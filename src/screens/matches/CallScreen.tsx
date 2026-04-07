@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { DailyMediaView, DailyCall, DailyEventObjectParticipant, DailyParticipant } from '@daily-co/react-native-daily-js';
 import { MatchesStackParamList } from '../../navigation/MatchesNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { callService } from '../../services';
 import { useAuthStore } from '../../store';
 
@@ -16,6 +17,8 @@ type CallScreenProps = {
 const { width } = Dimensions.get('window');
 
 export default function CallScreen({ route, navigation }: CallScreenProps) {
+    const COLORS = useColors();
+    const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
     const { matchId, partnerName, callType, sessionId: initialSessionId } = route.params;
     const { user } = useAuthStore();
 
@@ -201,7 +204,7 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000',

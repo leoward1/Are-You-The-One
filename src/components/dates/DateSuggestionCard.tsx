@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { DateSuggestion } from '../../types';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Card } from '../ui/Card';
 
 interface DateSuggestionCardProps {
@@ -15,6 +16,8 @@ export const DateSuggestionCard: React.FC<DateSuggestionCardProps> = ({
     onPress,
     onShare,
 }) => {
+    const COLORS = useColors();
+    const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
     return (
         <Card style={styles.card} onPress={onPress} padding="none">
             <Image
@@ -47,7 +50,7 @@ export const DateSuggestionCard: React.FC<DateSuggestionCardProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
     card: {
         marginBottom: SPACING.md,
         overflow: 'hidden',

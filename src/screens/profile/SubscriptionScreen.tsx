@@ -8,7 +8,7 @@
  *   • Horizontal credit pack cards with savings badges
  *   • Tapping a pack triggers native App Store purchase sheet
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { useCreditsStore } from '../../store/useCreditsStore';
 import { CreditPack, CREDIT_COSTS, CreditAction } from '../../services/iap.service';
 
@@ -393,6 +394,7 @@ const featureStyles = StyleSheet.create({
 
 // ─── Main Screen ─────────────────────────────────────────────────────────
 export default function SubscriptionScreen({ navigation }: SubscriptionScreenProps) {
+  const COLORS = useColors();
   const {
     balance,
     packs,

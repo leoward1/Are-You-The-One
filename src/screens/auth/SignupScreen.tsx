@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useAuthStore } from '../../store';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Input } from '../../components/ui';
 import { analyticsService } from '../../services/analytics.service';
 import { validatePassword } from '../../utils/validators';
@@ -43,6 +44,8 @@ const isValidDate = (dateStr: string): boolean => {
 };
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     email: '',
@@ -320,7 +323,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

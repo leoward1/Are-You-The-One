@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, INTERESTS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Input, Badge } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { VideoRecorder } from '../../components/onboarding/VideoRecorder';
@@ -30,6 +31,8 @@ const STEPS = [
 ];
 
 export default function OnboardingScreen() {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { user, updateProfile } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -363,7 +366,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

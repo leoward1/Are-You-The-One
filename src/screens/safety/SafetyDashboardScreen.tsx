@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafetyStackParamList } from '../../navigation/SafetyNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Card } from '../../components/ui';
 import { safetyService } from '../../services/safety.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -22,6 +23,8 @@ type SafetyDashboardScreenProps = {
 };
 
 export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { user } = useAuthStore();
   const [hasActiveCheckin, setHasActiveCheckin] = useState(false);
   const [activeCheckinId, setActiveCheckinId] = useState<string | null>(null);
@@ -257,7 +260,7 @@ export default function SafetyDashboardScreen({ navigation }: SafetyDashboardScr
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
   header: { alignItems: 'center', marginBottom: SPACING.xl },

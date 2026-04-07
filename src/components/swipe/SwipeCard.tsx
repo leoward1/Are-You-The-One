@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, FONTS } from '../../utils/constants';
+import { SPACING, BORDER_RADIUS, SHADOWS, FONTS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Badge } from '../ui/Badge';
 import type { Gender } from '../../types';
 
@@ -49,6 +50,8 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   isFirst = false,
   userGender = 'male',
 }) => {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
@@ -218,7 +221,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   card: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,

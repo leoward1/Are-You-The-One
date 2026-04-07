@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../../utils/constants';
+import { useColors } from '../../../hooks/useColors';
 import { GameData } from '../../../types';
 
 interface TicTacToeProps {
@@ -17,6 +18,8 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({
     currentUserId,
     onMove,
 }) => {
+    const COLORS = useColors();
+    const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
     const board = gameData.state as string[] || Array(9).fill(null);
 
     const handlePress = (index: number) => {
@@ -69,7 +72,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
     container: {
         padding: SPACING.md,
         backgroundColor: COLORS.surface,

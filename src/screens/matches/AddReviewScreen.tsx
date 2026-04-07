@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,12 +11,15 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Card } from '../../components/ui';
 import { reviewService } from '../../services';
 import { useAuthStore } from '../../store';
 
 export default function AddReviewScreen({ navigation, route }: any) {
+    const COLORS = useColors();
+    const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
     const { matchId, partnerName } = route.params;
     const { user } = useAuthStore();
     const [rating, setRating] = useState(0);
@@ -131,7 +134,7 @@ export default function AddReviewScreen({ navigation, route }: any) {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS } from '../../utils/constants';
+import { SPACING, FONTS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { SwipeDeck, SwipeAnimationOverlay } from '../../components/swipe';
 import type { SwipeAnimationType } from '../../components/swipe';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -16,6 +17,8 @@ import { analyticsService } from '../../services/analytics.service';
 import type { Gender, Profile } from '../../types';
 
 export default function SwipeDeckScreen({ navigation }: any) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const user = useAuthStore((state) => state.user);
   const userGender: Gender = user?.gender || 'male';
   const likeAnimationType: SwipeAnimationType = userGender === 'female' ? 'kiss' : 'rose';
@@ -175,7 +178,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

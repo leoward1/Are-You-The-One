@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { Video, ResizeMode } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '@/utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '@/utils/constants';
+import { useColors } from '@/hooks/useColors';
 import { supabaseService } from '@/services/supabase.service';
 import { supabase } from '@/config/supabase';
 import Button from '@/components/ui/Button';
@@ -13,6 +14,8 @@ import Button from '@/components/ui/Button';
 const MAX_RECORDING_TIME = 30;
 
 export default function VideoIntroScreen() {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const userId = route.params?.userId; // Passed explicitly for uploading
@@ -225,7 +228,7 @@ export default function VideoIntroScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',

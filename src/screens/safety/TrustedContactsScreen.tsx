@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS } from '../../utils/constants';
+import { SPACING, FONTS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button, Input, Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { supabase } from '../../config/supabase';
 
 export default function TrustedContactsScreen() {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
@@ -123,7 +126,7 @@ export default function TrustedContactsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { padding: SPACING.lg },
   title: { fontSize: 24, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.xs },

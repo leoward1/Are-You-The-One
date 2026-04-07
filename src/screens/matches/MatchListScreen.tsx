@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MatchesStackParamList } from '@/navigation/MatchesNavigator';
 import { useMatchStore, useAuthStore } from '@/store';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '@/utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '@/utils/constants';
+import { useColors } from '@/hooks/useColors';
 import { formatMessageTime, truncateText } from '@/utils/formatters';
 import { Match } from '@/types';
 
@@ -23,6 +24,8 @@ type MatchListScreenProps = {
 };
 
 export default function MatchListScreen({ navigation }: MatchListScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { matches, loadMatches, isLoading } = useMatchStore();
   const { user } = useAuthStore();
   const currentUserId = user?.id;
@@ -183,7 +186,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   header: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
   title: { fontSize: 28, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.md },

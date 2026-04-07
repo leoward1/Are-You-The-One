@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { Button } from '../../components/ui';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -13,6 +14,8 @@ type WelcomeScreenProps = {
 };
 
 export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -73,7 +76,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#8B1538',

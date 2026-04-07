@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../../utils/constants';
+import { useColors } from '../../hooks/useColors';
 import { reviewService } from '../../services/review.service';
 import { Review } from '../../types';
 import { Avatar } from '../../components/ui';
@@ -23,6 +24,8 @@ interface SuccessStory extends Review {
 }
 
 export default function SuccessStoriesScreen({ navigation }: any) {
+  const COLORS = useColors();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [reviews, setReviews] = useState<SuccessStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -107,7 +110,7 @@ export default function SuccessStoriesScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
