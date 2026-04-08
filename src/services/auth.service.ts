@@ -179,7 +179,7 @@ class AuthService {
     if (settings) {
       await supabase
         .from('user_settings')
-        .upsert({ user_id: user.id, ...settings, updated_at: new Date().toISOString() });
+        .upsert({ user_id: user.id, ...settings });
     }
 
     // Update preferences if provided

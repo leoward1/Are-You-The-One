@@ -87,7 +87,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       show_distance: updated.privacy.showDistance,
       incognito_mode: updated.privacy.incognito,
       show_in_discovery: updated.discovery.showMe,
-      updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
   };
 

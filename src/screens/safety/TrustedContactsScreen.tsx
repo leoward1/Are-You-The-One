@@ -61,7 +61,6 @@ export default function TrustedContactsScreen() {
           emergency_contact_name: formData.name.trim(),
           emergency_contact_email: formData.email.trim(),
           emergency_contact_phone: formData.phone.trim(),
-          updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
       if (error) throw new Error(error.message);
       Alert.alert('Saved', 'Your trusted contact has been saved successfully.');
