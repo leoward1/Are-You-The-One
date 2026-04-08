@@ -12,6 +12,7 @@ import { useColors } from '../../hooks/useColors';
 import { SwipeDeck, SwipeAnimationOverlay } from '../../components/swipe';
 import type { SwipeAnimationType } from '../../components/swipe';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppSettingsStore } from '../../store/useAppSettingsStore';
 import { matchService } from '../../services/match.service';
 import { analyticsService } from '../../services/analytics.service';
 import type { Gender, Profile } from '../../types';
@@ -20,6 +21,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
   const COLORS = useColors();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const user = useAuthStore((state) => state.user);
+  const soundEnabled = useAppSettingsStore((state) => state.soundEnabled);
   const userGender: Gender = user?.gender || 'male';
   const likeAnimationType: SwipeAnimationType = userGender === 'female' ? 'kiss' : 'rose';
 
@@ -173,6 +175,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
         visible={animation.visible}
         onFinish={handleAnimationFinish}
         matchedUserName={animation.matchedName}
+        soundEnabled={soundEnabled}
       />
     </SafeAreaView>
   );

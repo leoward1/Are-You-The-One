@@ -15,6 +15,7 @@ interface SwipeAnimationOverlayProps {
     onFinish: () => void;
     matchedUserName?: string;
     matchedUserPhoto?: string;
+    soundEnabled?: boolean;
 }
 
 // --- PLACEHOLDER ASSETS ---
@@ -35,8 +36,9 @@ const ASSETS = {
 };
 
 // Hook to play sounds easily
-function usePlaySound(source: any) {
+function usePlaySound(source: any, soundEnabled: boolean = true) {
     useEffect(() => {
+        if (!soundEnabled) return;
         let soundObject: Audio.Sound | null = null;
         async function play() {
             try {
@@ -51,11 +53,11 @@ function usePlaySound(source: any) {
         return () => {
             if (soundObject) soundObject.unloadAsync();
         };
-    }, []);
+    }, [soundEnabled]);
 }
 
-const RoseAnimation = ({ onFinish }: { onFinish: () => void }) => {
-    usePlaySound(ASSETS.sounds.pop);
+const RoseAnimation = ({ onFinish, soundEnabled }: { onFinish: () => void; soundEnabled: boolean }) => {
+    usePlaySound(ASSETS.sounds.pop, soundEnabled);
     useEffect(() => {
         const timer = setTimeout(onFinish, 2500);
         return () => clearTimeout(timer);
@@ -72,8 +74,8 @@ const RoseAnimation = ({ onFinish }: { onFinish: () => void }) => {
     );
 };
 
-const KissAnimation = ({ onFinish }: { onFinish: () => void }) => {
-    usePlaySound(ASSETS.sounds.pop);
+const KissAnimation = ({ onFinish, soundEnabled }: { onFinish: () => void; soundEnabled: boolean }) => {
+    usePlaySound(ASSETS.sounds.pop, soundEnabled);
     useEffect(() => {
         const timer = setTimeout(onFinish, 2200);
         return () => clearTimeout(timer);
@@ -90,8 +92,8 @@ const KissAnimation = ({ onFinish }: { onFinish: () => void }) => {
     );
 };
 
-const PassAnimation = ({ onFinish }: { onFinish: () => void }) => {
-    usePlaySound(ASSETS.sounds.error);
+const PassAnimation = ({ onFinish, soundEnabled }: { onFinish: () => void; soundEnabled: boolean }) => {
+    usePlaySound(ASSETS.sounds.error, soundEnabled);
     useEffect(() => {
         const timer = setTimeout(onFinish, 1300);
         return () => clearTimeout(timer);
@@ -104,8 +106,8 @@ const PassAnimation = ({ onFinish }: { onFinish: () => void }) => {
     );
 };
 
-const MatchAnimation = ({ onFinish, matchedUserName }: { onFinish: () => void; matchedUserName?: string; }) => {
-    usePlaySound(ASSETS.sounds.success);
+const MatchAnimation = ({ onFinish, matchedUserName, soundEnabled }: { onFinish: () => void; matchedUserName?: string; soundEnabled: boolean }) => {
+    usePlaySound(ASSETS.sounds.success, soundEnabled);
     
     return (
         <Animated.View style={[styles.fullOverlay, styles.matchOverlay]} entering={FadeIn.duration(300)} exiting={FadeOut.duration(400)}>
@@ -128,14 +130,14 @@ const MatchAnimation = ({ onFinish, matchedUserName }: { onFinish: () => void; m
     );
 };
 
-export default function SwipeAnimationOverlay({ type, visible, onFinish, matchedUserName }: SwipeAnimationOverlayProps) {
+export default function SwipeAnimationOverlay({ type, visible, onFinish, matchedUserName, soundEnabled = true }: SwipeAnimationOverlayProps) {
     if (!visible || !type) return null;
 
     switch (type) {
-        case 'rose': return <RoseAnimation onFinish={onFinish} />;
-        case 'kiss': return <KissAnimation onFinish={onFinish} />;
-        case 'pass': return <PassAnimation onFinish={onFinish} />;
-        case 'match': return <MatchAnimation onFinish={onFinish} matchedUserName={matchedUserName} />;
+        case 'rose': return <RoseAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
+        case 'kiss': return <KissAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
+        case 'pass': return <PassAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
+        case 'match': return <MatchAnimation onFinish={onFinish} matchedUserName={matchedUserName} soundEnabled={soundEnabled} />;
         default: return null;
     }
 }

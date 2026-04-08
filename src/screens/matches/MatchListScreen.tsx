@@ -58,7 +58,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   const renderNewMatch = ({ item }: { item: Match }) => (
     <TouchableOpacity
       style={styles.newMatchItem}
-      onPress={() => navigation.navigate('Chat', { matchId: item.id })}
+      onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.matched_user?.first_name || 'Match' })}
     >
       <View style={styles.newMatchAvatarContainer}>
         <Image
@@ -82,7 +82,7 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   const renderConversation = ({ item }: { item: Match }) => (
     <TouchableOpacity
       style={styles.conversationItem}
-      onPress={() => navigation.navigate('Chat', { matchId: item.id })}
+      onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.matched_user?.first_name || 'Match' })}
       activeOpacity={0.7}
     >
       <Image

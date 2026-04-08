@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import Animated, {
   withSpring,
   interpolate,
   Extrapolate,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,6 +62,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   const likeLabel = userGender === 'female' ? 'KISS' : 'ROSE';
   const likeColor = userGender === 'female' ? COLORS.kiss : COLORS.rose;
 
+  const jsSwipeRight = useCallback(() => onSwipeRight(), [onSwipeRight]);
+  const jsSwipeLeft = useCallback(() => onSwipeLeft(), [onSwipeLeft]);
+  const jsSuperLike = useCallback(() => onSuperLike?.(), [onSuperLike]);
+
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       if (!isFirst) return;
@@ -78,13 +83,13 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
 
       if (translateX.value > SWIPE_THRESHOLD) {
         translateX.value = withSpring(SCREEN_WIDTH * 1.5);
-        onSwipeRight();
+        runOnJS(jsSwipeRight)();
       } else if (translateX.value < -SWIPE_THRESHOLD) {
         translateX.value = withSpring(-SCREEN_WIDTH * 1.5);
-        onSwipeLeft();
+        runOnJS(jsSwipeLeft)();
       } else if (translateY.value < -100 && onSuperLike) {
         translateY.value = withSpring(-SCREEN_HEIGHT);
-        onSuperLike();
+        runOnJS(jsSuperLike)();
       } else {
         translateX.value = withSpring(0);
         translateY.value = withSpring(0);

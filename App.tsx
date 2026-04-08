@@ -9,6 +9,9 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useThemeStore } from './src/store/useThemeStore';
+import { useAppSettingsStore } from './src/store/useAppSettingsStore';
+import { useNetworkStatus } from './src/hooks/useNetworkStatus';
+import { OfflineBanner } from './src/components/ui/OfflineBanner';
 import Constants from 'expo-constants';
 
 // Keep the native splash screen visible while we load auth state
@@ -21,6 +24,8 @@ export default function App() {
   const loadUser = useAuthStore((state: any) => state.loadUser);
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
   const { mode, loadMode } = useThemeStore();
+  const loadAppSettings = useAppSettingsStore((state) => state.loadAppSettings);
+  const isOnline = useNetworkStatus();
   const systemScheme = useColorScheme();
   const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
 
@@ -30,6 +35,7 @@ export default function App() {
     const initApp = async () => {
       try {
         await loadMode();
+        await loadAppSettings();
         await loadUser();
         unsubscribe = initAuthListener();
       } catch (error) {
@@ -58,6 +64,7 @@ export default function App() {
         <NavigationContainer onReady={() => { SplashScreen.hideAsync(); }}>
           <RootNavigator />
         </NavigationContainer>
+        {!isOnline && <OfflineBanner />}
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </SafeAreaProvider>
     </GestureHandlerRootView>

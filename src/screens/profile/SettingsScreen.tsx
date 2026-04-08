@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store';
 import { supabase } from '../../config/supabase';
 import { useColors } from '../../hooks/useColors';
 import { useThemeStore } from '../../store/useThemeStore';
+import { useAppSettingsStore } from '../../store/useAppSettingsStore';
 import type { ThemeMode } from '../../utils/theme';
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +22,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { logout, user } = useAuthStore();
   const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+  const { soundEnabled, setSoundEnabled } = useAppSettingsStore();
 
   const [settings, setSettings] = useState({
     notifications: {
@@ -172,6 +174,19 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               ))}
             </View>
           </View>
+        </Card>
+
+        {/* ─── Sounds ─── */}
+        <Text style={styles.sectionTitle}>Sounds</Text>
+        <Card variant="elevated" padding="none">
+          <SettingRow
+            label="Animation Sounds"
+            description="Play sounds when sending a Rose or Kiss"
+            value={soundEnabled}
+            onToggle={() => setSoundEnabled(!soundEnabled)}
+            COLORS={COLORS}
+            styles={styles}
+          />
         </Card>
 
         {/* ─── Notifications ─── */}
