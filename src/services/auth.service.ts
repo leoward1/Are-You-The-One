@@ -5,10 +5,6 @@ import { analyticsService } from './analytics.service';
 import { rateLimiter } from '@/utils/rateLimiter';
 import { sanitizeText } from '@/utils/sanitizer';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
-
-WebBrowser.maybeCompleteAuthSession();
 
 class AuthService {
 
@@ -240,40 +236,48 @@ class AuthService {
     }
   }
 
-  async signInWithOAuth(provider: 'google' | 'apple'): Promise<void> {
-    if (provider === 'apple') {
-      // Native Apple Sign In — works on iOS devices only
-      if (Platform.OS !== 'ios') throw new Error('Apple Sign In is only available on iOS.');
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-      if (!credential.identityToken) throw new Error('Apple Sign In failed: no identity token returned.');
-      const { error } = await supabase.auth.signInWithIdToken({
-        provider: 'apple',
-        token: credential.identityToken,
-      });
-      if (error) throw new Error(error.message);
-      return;
-    }
+  async signInWithApple(): Promise<void> {
+    if (Platform.OS !== 'ios') throw new Error('Apple Sign In is only available on iOS.');
 
-    // Google: OAuth via in-app browser with PKCE deep-link callback
-    const redirectTo = makeRedirectUri({ scheme: 'areyoutheone', path: 'auth-callback' });
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo, skipBrowserRedirect: true },
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    if (!credential.identityToken) throw new Error('Apple Sign In failed: no identity token returned.');
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
     });
     if (error) throw new Error(error.message);
-    if (!data.url) throw new Error('Google Sign In failed: no OAuth URL returned.');
+    if (!data.session) throw new Error('Apple Sign In failed: no session returned.');
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    if (result.type !== 'success') throw new Error('Google Sign In was cancelled or failed.');
+    // Ensure a profile row exists for new Apple sign-in users
+    const userId = data.session.user.id;
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id, onboarding_complete')
+      .eq('id', userId)
+      .maybeSingle();
 
-    // Exchange the PKCE authorization code for a Supabase session
-    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
-    if (sessionError) throw new Error(sessionError.message);
+    if (!existing) {
+      const firstName = credential.fullName?.givenName || 'User';
+      const lastName = credential.fullName?.familyName || '';
+      const email = credential.email || data.session.user.email || '';
+      await supabase.from('profiles').insert({
+        id: userId,
+        first_name: sanitizeText(firstName, 50),
+        last_name: sanitizeText(lastName, 50),
+        email,
+        onboarding_complete: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      await supabase.from('user_settings').insert({ user_id: userId }).maybeSingle();
+    }
   }
 
   async resetPassword(email: string): Promise<void> {

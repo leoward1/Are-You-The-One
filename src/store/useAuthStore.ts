@@ -15,7 +15,7 @@ interface AuthState {
   loadUser: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
   deleteAccount: () => Promise<void>;
-  signInWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
+  signInWithApple: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   initAuthListener: () => () => void;
   clearError: () => void;
@@ -139,15 +139,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInWithOAuth: async (provider: 'google' | 'apple') => {
+  signInWithApple: async () => {
     set({ isLoading: true, error: null });
     try {
-      await authService.signInWithOAuth(provider);
-      // Explicitly load the user after OAuth session is established
+      await authService.signInWithApple();
       await get().loadUser();
     } catch (error: any) {
       set({
-        error: error.message || 'OAuth login failed',
+        error: error.message || 'Apple Sign In failed',
         isLoading: false,
       });
       throw error;

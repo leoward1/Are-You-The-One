@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
 } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -58,7 +59,16 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     city: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { signup, isLoading } = useAuthStore();
+  const { signup, signInWithApple, isLoading } = useAuthStore();
+
+  const handleAppleSignIn = async () => {
+    try {
+      await signInWithApple();
+    } catch (err: any) {
+      if ((err as any).code === 'ERR_REQUEST_CANCELED') return;
+      Alert.alert('Apple Sign In Failed', err.message || 'Please try again');
+    }
+  };
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -311,6 +321,23 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             </View>
           )}
 
+          {Platform.OS === 'ios' && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={BORDER_RADIUS.lg}
+                style={styles.appleButton}
+                onPress={handleAppleSignIn}
+              />
+            </>
+          )}
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -462,5 +489,25 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   tosLink: {
     color: COLORS.primary,
     fontFamily: FONTS.medium,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  dividerText: {
+    marginHorizontal: SPACING.md,
+    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
   },
 });

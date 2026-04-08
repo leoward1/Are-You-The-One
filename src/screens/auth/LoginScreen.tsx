@@ -21,7 +21,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const { login, signInWithOAuth, resetPassword, isLoading, error } = useAuthStore();
+  const { login, signInWithApple, resetPassword, isLoading, error } = useAuthStore();
 
   const validateForm = () => {
     let isValid = true;
@@ -55,12 +55,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
+  const handleAppleSignIn = async () => {
     try {
-      await signInWithOAuth(provider);
-      analyticsService.track('sign_up_completed', { method: provider });
+      await signInWithApple();
+      analyticsService.track('sign_up_completed', { method: 'apple' });
     } catch (err: any) {
-      Alert.alert('Login Failed', err.message || 'OAuth login failed');
+      if ((err as any).code === 'ERR_REQUEST_CANCELED') return;
+      Alert.alert('Apple Sign In Failed', err.message || 'Please try again');
     }
   };
 
@@ -152,24 +153,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             <View style={styles.dividerLine} />
           </View>
 
-          <View style={styles.socialButtons}>
-            {Platform.OS === 'ios' && (
+          {Platform.OS === 'ios' && (
+            <View style={styles.socialButtons}>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
                 cornerRadius={BORDER_RADIUS.lg}
                 style={styles.appleButton}
-                onPress={() => handleOAuth('apple')}
+                onPress={handleAppleSignIn}
               />
-            )}
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={() => handleOAuth('google')}
-              disabled={isLoading}
-            >
-              <Text style={styles.socialButtonText}>G  Sign in with Google</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
