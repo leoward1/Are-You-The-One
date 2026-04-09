@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Profile, Match, LikeType } from '@/types';
 import { matchService } from '@/services';
+import { supabase } from '@/config/supabase';
 
 interface MatchState {
   discoveryProfiles: Profile[];
@@ -17,6 +18,7 @@ interface MatchState {
   loadMatches: () => Promise<void>;
   unlockStage: (matchId: string) => Promise<void>;
   checkAndUpgradeUnlockStage: (match: Match, tier: string) => Promise<void>;
+  subscribeToMatchUpdates: () => () => void;
   clearError: () => void;
 }
 
@@ -126,6 +128,46 @@ export const useMatchStore = create<MatchState>((set, get) => ({
     } catch (error: any) {
       console.error('Failed to auto-upgrade stage:', error);
     }
+  },
+
+  subscribeToMatchUpdates: () => {
+    const channel = supabase
+      .channel('match_list_updates')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const newMessage = payload.new as any;
+          const { matches } = get();
+          
+          // Check if this message belongs to one of our matches
+          const matchIndex = matches.findIndex(m => m.id === newMessage.match_id);
+          if (matchIndex !== -1) {
+            const updatedMatches = [...matches];
+            const targetMatch = { ...updatedMatches[matchIndex] };
+            
+            // Update last message and unread count
+            targetMatch.last_message = newMessage;
+            
+            // Check if message is from the other user to increment unread count
+            supabase.auth.getUser().then(({ data }) => {
+              if (newMessage.from_user_id !== data.user?.id) {
+                targetMatch.unread_count = (targetMatch.unread_count || 0) + 1;
+              }
+              targetMatch.updated_at = newMessage.created_at;
+
+              // Remove from old position and move to top
+              updatedMatches.splice(matchIndex, 1);
+              set({ matches: [targetMatch, ...updatedMatches] });
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   },
 
   clearError: () => set({ error: null }),

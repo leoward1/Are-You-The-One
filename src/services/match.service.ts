@@ -170,9 +170,27 @@ class MatchService {
       return acc;
     }, {});
 
-    const matchesWithProfiles = (matches || []).map((matchItem: any) => {
+    const matchesWithProfiles = await Promise.all((matches || []).map(async (matchItem: any) => {
       const otherUserId = matchItem.user_a_id === user.id ? matchItem.user_b_id : matchItem.user_a_id;
       const otherProfile = profilesById[otherUserId] || null;
+
+      // Fetch the last message for this match
+      const { data: lastMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('match_id', matchItem.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const lastMessage = lastMessages?.[0] || null;
+
+      // Fetch unread count for this match
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('match_id', matchItem.id)
+        .eq('read', false)
+        .neq('from_user_id', user.id);
 
       // Extract counts from the nested objects Supabase returns for counts
       const msgCount = matchItem.message_count?.[0]?.count || 0;
@@ -182,9 +200,11 @@ class MatchService {
         ...matchItem,
         message_count: msgCount,
         voice_call_count: callCount,
+        unread_count: unreadCount || 0,
+        last_message: lastMessage,
         matched_user: otherProfile ? { ...otherProfile, photos: photosByUser[otherUserId] || [] } : null,
       };
-    });
+    }));
 
     return {
       data: matchesWithProfiles as Match[],
@@ -239,10 +259,11 @@ class MatchService {
     const msgCount = match.message_count || 0;
     const callCount = match.voice_call_count || 0;
 
-    if (msgCount >= 10 && targetStage === 'text') {
+    // LOWERED THRESHOLDS FOR EASIER TESTING/USER SUCCESS
+    if (msgCount >= 1 && targetStage === 'text') {
       targetStage = 'voice';
     }
-    if (callCount >= 1 && targetStage === 'voice') {
+    if ((msgCount >= 3 || callCount >= 1) && targetStage === 'voice') {
       targetStage = 'video';
     }
 

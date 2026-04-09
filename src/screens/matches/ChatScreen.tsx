@@ -352,7 +352,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
               matchId,
               partnerName: matchName || 'Match',
               callType: 'voice'
-            }) : Alert.alert('Locked', 'Send 10 messages to unlock Voice calls!')}
+            }) : Alert.alert('Locked', 'Send 1 message to unlock Voice calls!')}
           >
             <Text style={[styles.actionIcon, !isVoiceUnlocked && styles.disabledText]}>📞</Text>
           </TouchableOpacity>
@@ -363,7 +363,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
               matchId,
               partnerName: matchName || 'Match',
               callType: 'video'
-            }) : Alert.alert('Locked', 'Complete 1 voice call to unlock Video calls!')}
+            }) : Alert.alert('Locked', 'Send 3 messages to unlock Video calls!')}
           >
             <Text style={[styles.actionIcon, !isVideoUnlocked && styles.disabledText]}>📹</Text>
           </TouchableOpacity>

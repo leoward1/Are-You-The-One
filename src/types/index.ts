@@ -40,6 +40,7 @@ export interface User {
   preferences?: any;
   created_at: string;
   updated_at: string;
+  last_seen_at?: string;
 }
 
 export interface Profile {
@@ -58,6 +59,7 @@ export interface Profile {
   photos: Photo[];
   compatibility_pct?: number;
   quiz_score?: number;
+  last_seen_at?: string;
 }
 
 export interface Photo {
