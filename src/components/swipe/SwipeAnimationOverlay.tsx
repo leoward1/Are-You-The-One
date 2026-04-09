@@ -13,6 +13,7 @@ interface SwipeAnimationOverlayProps {
     type: SwipeAnimationType;
     visible: boolean;
     onFinish: () => void;
+    onSendMessage?: () => void;
     matchedUserName?: string;
     matchedUserPhoto?: string;
     soundEnabled?: boolean;
@@ -106,7 +107,7 @@ const PassAnimation = ({ onFinish, soundEnabled }: { onFinish: () => void; sound
     );
 };
 
-const MatchAnimation = ({ onFinish, matchedUserName, soundEnabled }: { onFinish: () => void; matchedUserName?: string; soundEnabled: boolean }) => {
+const MatchAnimation = ({ onFinish, onSendMessage, matchedUserName, soundEnabled }: { onFinish: () => void; onSendMessage?: () => void; matchedUserName?: string; soundEnabled: boolean }) => {
     usePlaySound(ASSETS.sounds.success, soundEnabled);
     
     return (
@@ -122,7 +123,10 @@ const MatchAnimation = ({ onFinish, matchedUserName, soundEnabled }: { onFinish:
                 <TouchableOpacity style={styles.matchButton} onPress={onFinish}>
                     <Text style={styles.matchButtonText}>Keep Swiping</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.matchButton, styles.matchButtonSecondary]} onPress={onFinish}>
+                <TouchableOpacity style={[styles.matchButton, styles.matchButtonSecondary]} onPress={() => {
+                    if (onSendMessage) onSendMessage();
+                    else onFinish();
+                }}>
                     <Text style={[styles.matchButtonText, styles.matchButtonTextSecondary]}>Send a Message</Text>
                 </TouchableOpacity>
             </View>
@@ -130,14 +134,14 @@ const MatchAnimation = ({ onFinish, matchedUserName, soundEnabled }: { onFinish:
     );
 };
 
-export default function SwipeAnimationOverlay({ type, visible, onFinish, matchedUserName, soundEnabled = true }: SwipeAnimationOverlayProps) {
+export default function SwipeAnimationOverlay({ type, visible, onFinish, onSendMessage, matchedUserName, soundEnabled = true }: SwipeAnimationOverlayProps) {
     if (!visible || !type) return null;
 
     switch (type) {
         case 'rose': return <RoseAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
         case 'kiss': return <KissAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
         case 'pass': return <PassAnimation onFinish={onFinish} soundEnabled={soundEnabled} />;
-        case 'match': return <MatchAnimation onFinish={onFinish} matchedUserName={matchedUserName} soundEnabled={soundEnabled} />;
+        case 'match': return <MatchAnimation onFinish={onFinish} onSendMessage={onSendMessage} matchedUserName={matchedUserName} soundEnabled={soundEnabled} />;
         default: return null;
     }
 }

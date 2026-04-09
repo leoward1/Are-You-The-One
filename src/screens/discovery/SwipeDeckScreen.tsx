@@ -33,6 +33,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
     type: SwipeAnimationType;
     visible: boolean;
     matchedName?: string;
+    matchedId?: string;
   }>({ type: null, visible: false });
 
   // FIX: Load real profiles from Supabase
@@ -97,6 +98,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
             type: 'match',
             visible: true,
             matchedName: profile.first_name || 'User',
+            matchedId: result.match?.id,
           });
         }, 2600);
       } else {
@@ -111,6 +113,19 @@ export default function SwipeDeckScreen({ navigation }: any) {
 
   const handleAnimationFinish = () => {
     setAnimation({ type: null, visible: false });
+  };
+
+  const handleSendMessage = () => {
+    if (animation.matchedId) {
+      const { matchedId, matchedName } = animation;
+      setAnimation({ type: null, visible: false });
+      navigation.navigate('Matches', { 
+        screen: 'Chat', 
+        params: { matchId: matchedId, matchName: matchedName || 'Your Match' } 
+      });
+    } else {
+      setAnimation({ type: null, visible: false });
+    }
   };
 
   // FIX: Reset currentIndex by reloading fresh profiles from Supabase
@@ -155,15 +170,21 @@ export default function SwipeDeckScreen({ navigation }: any) {
 
       {/* FIX: Pass formatted profiles — handle both real DB shape and legacy shape */}
       <SwipeDeck
-        profiles={profiles.map(p => ({
-          id: p.id,
-          name: p.first_name || 'User',
-          age: p.age || 25,
-          photos: p.photos?.map((ph: any) => typeof ph === 'string' ? ph : ph.url).filter(Boolean) || [],
-          bio: p.bio || '',
-          interests: p.interests || [],
-          distance: p.distance_miles || 0,
-        }))}
+        profiles={profiles.map(p => {
+          let mappedPhotos = p.photos?.map((ph: any) => typeof ph === 'string' ? ph : ph.url).filter(Boolean) || [];
+          if (mappedPhotos.length === 0 && p.primary_photo) {
+            mappedPhotos = [p.primary_photo];
+          }
+          return {
+            id: p.id,
+            name: p.first_name || 'User',
+            age: p.age || 25,
+            photos: mappedPhotos,
+            bio: p.bio || '',
+            interests: p.interests || [],
+            distance: p.distance_miles || 0,
+          };
+        })}
         onSwipeLeft={(p) => handleSwipeLeft(profiles.find(orig => orig.id === p.id)!)}
         onSwipeRight={(p) => handleSwipeRight(profiles.find(orig => orig.id === p.id)!)}
         onEmpty={handleEmpty}
@@ -174,6 +195,7 @@ export default function SwipeDeckScreen({ navigation }: any) {
         type={animation.type}
         visible={animation.visible}
         onFinish={handleAnimationFinish}
+        onSendMessage={handleSendMessage}
         matchedUserName={animation.matchedName}
         soundEnabled={soundEnabled}
       />

@@ -26,7 +26,7 @@ export default function MatchesNavigator() {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        options={{ title: 'Chat' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Call"

@@ -134,7 +134,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       console.error('Error sending message:', error);
       // Remove the optimistic message on failure and notify the user
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id));
-      Alert.alert('Message Failed', 'Your message could not be sent. Please try again.');
+      Alert.alert('Message Failed', `Your message could not be sent. ${error.message || 'Please try again.'}`);
     } finally {
       setIsSending(false);
     }
