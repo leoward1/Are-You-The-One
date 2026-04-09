@@ -12,10 +12,46 @@ class CallService {
         return this.callObject;
     }
 
+    async getCallCountToday(userId: string): Promise<number> {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const { count, error } = await supabase
+            .from('call_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('from_user_id', userId)
+            .gte('started_at', today.toISOString());
+
+        if (error) {
+            console.error('Error counting today\'s calls:', error);
+            return 0;
+        }
+
+        return count || 0;
+    }
+
     async initiateCall(matchId: string, kind: 'voice' | 'video'): Promise<ApiResponse<CallSession>> {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
+
+            // Fetch user profile for tier info
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('tier')
+                .eq('id', user.id)
+                .single();
+
+            const tier = profile?.tier || 'free';
+            const callCount = await this.getCallCountToday(user.id);
+
+            // LIMIT ENFORCEMENT
+            if (tier === 'free' && callCount >= 3) {
+                throw new Error('Daily call limit reached (3/3). Upgrade to Plus or Pro for unlimited calls!');
+            }
+            if (tier === 'plus' && callCount >= 15) {
+                throw new Error('Daily call limit reached (15/15) for Plus. Upgrade to Pro for unlimited calls!');
+            }
 
             // SECURITY: Generate a unique, unpredictable room URL per call session
             // In production, a Supabase Edge Function should create the Daily room
