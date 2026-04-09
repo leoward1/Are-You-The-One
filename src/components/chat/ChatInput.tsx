@@ -45,10 +45,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-    >
+    <>
       {showActions && (
         <View style={styles.actionsContainer}>
           <TouchableOpacity
@@ -116,7 +113,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </TouchableOpacity>
         ) : null}
       </View>
-    </KeyboardAvoidingView>
+    </>
   );
 };
 

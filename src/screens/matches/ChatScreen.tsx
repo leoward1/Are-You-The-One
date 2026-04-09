@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,6 +26,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { matches, checkAndUpgradeUnlockStage } = useMatchStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const match = matches.find(m => m.id === matchId);
@@ -56,8 +57,19 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     const unsubscribe = chatService.subscribeToMessages(matchId, (message) => {
       if (message) {
         setMessages((prev) => {
-          // Avoid duplicates if we already added it optimistically
-          if (prev.find(m => m.id === message.id)) return prev;
+          // Avoid duplicates: skip if already in the list (by real ID)
+          // Also replace any optimistic messages that now have a real ID
+          const exists = prev.find(
+            (m) => m.id === message.id || 
+            // Match optimistic messages from our own user sent around the same time
+            (m.id.startsWith('optimistic-') &&
+              m.from_user_id === message.from_user_id &&
+              m.content === message.content)
+          );
+          if (exists) {
+            // Replace optimistic with real message
+            return prev.map((m) => (m.id === exists.id ? message : m));
+          }
           return [...prev, message];
         });
       }
@@ -93,16 +105,38 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   }, [matchId, fetchMessages, user?.id, matchName, navigation]);
 
   const handleSend = async (content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || isSending) return;
+    setIsSending(true);
+
+    // Optimistic update: add the message immediately so user sees it right away
+    const optimisticMessage: Message = {
+      id: `optimistic-${Date.now()}`,
+      match_id: matchId,
+      from_user_id: user?.id || '',
+      type: 'text',
+      content,
+      read: false,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticMessage]);
+
     try {
-      await chatService.sendMessage({
+      const sent = await chatService.sendMessage({
         match_id: matchId,
         type: 'text',
         content,
       });
-      // Real-time subscription will update the list
-    } catch (error) {
+      // Replace the optimistic message with the real one from the server
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimisticMessage.id ? sent : m))
+      );
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      // Remove the optimistic message on failure and notify the user
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id));
+      Alert.alert('Message Failed', 'Your message could not be sent. Please try again.');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -137,23 +171,37 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
     try {
       const otherUserId = match?.user_a_id === user?.id ? match?.user_b_id : match?.user_a_id;
-      
-      await chatService.sendMessage({
-        match_id: matchId,
-        type: 'game',
-        content: winner ? (winner === 'draw' ? "It's a draw!" : "I won!") : "It's your turn!",
-        game_data: {
-          type: 'tictactoe',
-          state: newState,
-          turn_id: otherUserId || '', 
-          winner_id: winner,
-          is_finished: isFinished,
-          player_x: oldGameData?.player_x || '',
-          player_o: oldGameData?.player_o || '',
-        },
-      } as any);
+
+      // Update the existing game message instead of inserting a new row
+      const { data, error } = await supabase
+        .from('messages')
+        .update({
+          content: winner ? (winner === 'draw' ? "It's a draw!" : "I won!") : "It's your turn!",
+          game_data: {
+            type: 'tictactoe',
+            state: newState,
+            turn_id: otherUserId || '',
+            winner_id: winner,
+            is_finished: isFinished,
+            player_x: oldGameData?.player_x || '',
+            player_o: oldGameData?.player_o || '',
+          },
+        })
+        .eq('id', messageId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Optimistically update the message in local state
+      if (data) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? (data as any) : m))
+        );
+      }
     } catch (error) {
       console.error('Error making move:', error);
+      Alert.alert('Move Failed', 'Could not make your move. Please try again.');
     }
   };
 
@@ -285,32 +333,41 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         </Text>
       </View>
 
-      {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator color={COLORS.primary} size="large" />
-        </View>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messagesList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
-            </View>
-          }
-        />
-      )}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        {isLoading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator color={COLORS.primary} size="large" />
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messagesList}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
+              </View>
+            }
+          />
+        )}
 
-      <ChatInput
-        onSend={handleSend}
-        onDateSuggest={handleDateSuggest}
-        onGamePress={handleGamePress}
-        onReviewPress={() => navigation.navigate('AddReview', { matchId, partnerName: matchName || 'Your Match' })}
-      />
+        <ChatInput
+          onSend={handleSend}
+          onDateSuggest={handleDateSuggest}
+          onGamePress={handleGamePress}
+          onReviewPress={() => navigation.navigate('AddReview', { matchId, partnerName: matchName || 'Your Match' })}
+          disabled={isSending}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -319,6 +376,9 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

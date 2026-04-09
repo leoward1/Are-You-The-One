@@ -19,7 +19,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.areyoutheone.app",
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       },
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access for profile photos and video intros.",
@@ -29,21 +31,17 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "1"
+      "buildNumber": "27"
     },
     "android": {
       "package": "com.areyoutheone.app",
       "permissions": [
-        "CAMERA",
-        "RECORD_AUDIO",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
@@ -95,10 +93,11 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "f49f0d5b-5ee7-4f0e-ac2b-ae5ebc11f9c5"
+        "projectId": "8f6d34ae-e527-4db4-b666-fdb429efa627"
       },
       "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
       "supabaseAnonKey": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84"
-    }
+    },
+    "owner": "abiodunsulaimon"
   }
 }

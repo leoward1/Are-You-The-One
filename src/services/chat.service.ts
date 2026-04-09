@@ -146,6 +146,13 @@ class ChatService {
   subscribeToMessages(matchId: string, onNewMessage: (message: Message) => void): () => void {
     const channelName = `messages:${matchId}`;
 
+    // Unsubscribe from any existing channel for this match to avoid duplicates
+    const existing = this.channels.get(channelName);
+    if (existing) {
+      existing.unsubscribe();
+      this.channels.delete(channelName);
+    }
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -160,7 +167,15 @@ class ChatService {
           onNewMessage(payload.new as Message);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[Chat] Realtime subscribed for match: ${matchId}`);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error(`[Chat] Realtime subscription failed (${status}):`, err);
+        } else if (status === 'CLOSED') {
+          console.log(`[Chat] Realtime channel closed for match: ${matchId}`);
+        }
+      });
 
     this.channels.set(channelName, channel);
 
