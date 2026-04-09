@@ -17,6 +17,7 @@ interface AuthState {
   deleteAccount: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updatePresence: () => Promise<void>;
   initAuthListener: () => () => void;
   clearError: () => void;
 }
@@ -26,6 +27,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   isLoading: false,
   error: null,
+
+  updatePresence: async () => {
+    const { user } = get();
+    if (!user) return;
+    try {
+      await supabase
+        .from('profiles')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', user.id);
+    } catch (error) {
+      console.error('Error updating presence:', error);
+    }
+  },
 
   login: async (credentials) => {
     set({ isLoading: true, error: null });

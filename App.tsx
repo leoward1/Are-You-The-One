@@ -23,11 +23,27 @@ export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
   const loadUser = useAuthStore((state: any) => state.loadUser);
   const initAuthListener = useAuthStore((state: any) => state.initAuthListener);
+  const updatePresence = useAuthStore((state: any) => state.updatePresence);
+  const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
   const { mode, loadMode } = useThemeStore();
   const loadAppSettings = useAppSettingsStore((state) => state.loadAppSettings);
   const isOnline = useNetworkStatus();
   const systemScheme = useColorScheme();
   const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
+
+  // HEARTBEAT: Update presence every 2 minutes
+  useEffect(() => {
+    if (!isAuthenticated || !isOnline) return;
+
+    // Update immediately on mount
+    updatePresence();
+
+    const interval = setInterval(() => {
+      updatePresence();
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, isOnline]);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;

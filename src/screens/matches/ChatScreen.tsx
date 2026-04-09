@@ -27,6 +27,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [partnerStatus, setPartnerStatus] = useState<string>('Offline');
   const flatListRef = useRef<FlatList>(null);
 
   const match = matches.find(m => m.id === matchId);
@@ -104,6 +105,45 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     };
   }, [matchId, fetchMessages, user?.id, matchName, navigation]);
 
+  const fetchPartnerStatus = useCallback(async () => {
+    try {
+      const otherUserId = match?.user_a_id === user?.id ? match?.user_b_id : match?.user_a_id;
+      if (!otherUserId) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('last_seen_at')
+        .eq('id', otherUserId)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.last_seen_at) {
+        setPartnerStatus(formatStatus(data.last_seen_at));
+      }
+    } catch (error) {
+      console.error('Error fetching partner status:', error);
+    }
+  }, [match, user?.id]);
+
+  useEffect(() => {
+    fetchPartnerStatus();
+    // Refresh status every minute
+    const interval = setInterval(fetchPartnerStatus, 60000);
+    return () => clearInterval(interval);
+  }, [fetchPartnerStatus]);
+
+  const formatStatus = (lastSeenAt: string) => {
+    const lastSeen = new Date(lastSeenAt);
+    const now = new Date();
+    const diffInMins = Math.floor((now.getTime() - lastSeen.getTime()) / 60000);
+
+    if (diffInMins < 2) return 'Active';
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)}h ago`;
+    return 'Offline';
+  };
+
   const handleSend = async (content: string) => {
     if (!content.trim() || isSending) return;
     setIsSending(true);
@@ -178,20 +218,21 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         .update({
           content: winner ? (winner === 'draw' ? "It's a draw!" : "I won!") : "It's your turn!",
           game_data: {
-            type: 'tictactoe',
+            ...oldGameData,
             state: newState,
             turn_id: otherUserId || '',
             winner_id: winner,
             is_finished: isFinished,
-            player_x: oldGameData?.player_x || '',
-            player_o: oldGameData?.player_o || '',
           },
         })
         .eq('id', messageId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
 
       // Optimistically update the message in local state
       if (data) {
@@ -296,7 +337,12 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         <Avatar name={matchName} size="small" />
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{matchName}</Text>
-          <Text style={styles.headerStatus}>Active</Text>
+          <Text style={[
+            styles.headerStatus,
+            partnerStatus === 'Active' && styles.activeStatus
+          ]}>
+            {partnerStatus}
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -409,7 +455,11 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   headerStatus: {
     fontSize: 12,
     fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  activeStatus: {
     color: COLORS.success,
+    fontFamily: FONTS.medium,
   },
   headerActions: {
     flexDirection: 'row',
