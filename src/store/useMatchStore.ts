@@ -19,6 +19,7 @@ interface MatchState {
   unlockStage: (matchId: string) => Promise<void>;
   checkAndUpgradeUnlockStage: (match: Match, tier: string) => Promise<void>;
   subscribeToMatchUpdates: () => () => void;
+  clearUnreadCount: (matchId: string) => void;
   clearError: () => void;
 }
 
@@ -168,6 +169,15 @@ export const useMatchStore = create<MatchState>((set, get) => ({
     return () => {
       supabase.removeChannel(channel);
     };
+  },
+
+  clearUnreadCount: (matchId: string) => {
+    const { matches } = get();
+    set({
+      matches: matches.map((m) =>
+        m.id === matchId ? { ...m, unread_count: 0 } : m
+      ),
+    });
   },
 
   clearError: () => set({ error: null }),

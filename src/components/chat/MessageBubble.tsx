@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { useColors } from '../../hooks/useColors';
 import { TicTacToe } from './games/TicTacToe';
@@ -19,7 +19,10 @@ interface MessageBubbleProps {
   currentUserId: string;
   showTimestamp?: boolean;
   onMove?: (newState: string[]) => void;
+  onReply?: (message: { id: string; content: string; senderId: string }) => void;
 }
+
+const SWIPE_THRESHOLD = 60;
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
@@ -27,9 +30,40 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   currentUserId,
   showTimestamp = true,
   onMove,
+  onReply,
 }) => {
   const COLORS = useColors();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const replyOpacity = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dy) < 20,
+      onPanResponderMove: (_, g) => {
+        if (g.dx > 0 && g.dx <= SWIPE_THRESHOLD + 20) {
+          translateX.setValue(g.dx);
+          replyOpacity.setValue(Math.min(g.dx / SWIPE_THRESHOLD, 1));
+        }
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dx >= SWIPE_THRESHOLD) {
+          onReply?.({ id: message.id, content: message.content, senderId: message.senderId });
+        }
+        Animated.parallel([
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, friction: 6 }),
+          Animated.timing(replyOpacity, { toValue: 0, duration: 150, useNativeDriver: true }),
+        ]).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.parallel([
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
+          Animated.timing(replyOpacity, { toValue: 0, duration: 100, useNativeDriver: true }),
+        ]).start();
+      },
+    })
+  ).current;
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -37,6 +71,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   return (
     <View style={[styles.container, isOwn ? styles.ownContainer : styles.otherContainer]}>
+      <Animated.View style={[styles.replyIcon, { opacity: replyOpacity }]}>
+        <Text style={styles.replyIconText}>↩️</Text>
+      </Animated.View>
+      <Animated.View
+        style={{ transform: [{ translateX }] }}
+        {...panResponder.panHandlers}
+      >
       <View style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}>
         {message.type === 'date_suggestion' ? (
           <View style={styles.suggestionContainer}>
@@ -70,6 +111,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {formatTime(message.timestamp)}
         </Text>
       )}
+      </Animated.View>
     </View>
   );
 };
@@ -78,14 +120,27 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   container: {
     marginVertical: SPACING.xs,
     maxWidth: '80%',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   ownContainer: {
     alignSelf: 'flex-end',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
   },
   otherContainer: {
     alignSelf: 'flex-start',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  replyIcon: {
+    position: 'absolute',
+    left: -28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  replyIconText: {
+    fontSize: 18,
   },
   bubble: {
     paddingVertical: SPACING.sm,

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,12 +23,14 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { matchId, matchName } = route.params;
   const { user } = useAuthStore();
-  const { matches, checkAndUpgradeUnlockStage } = useMatchStore();
+  const { matches, checkAndUpgradeUnlockStage, clearUnreadCount } = useMatchStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [partnerStatus, setPartnerStatus] = useState<string>('Offline');
+  const [replyTo, setReplyTo] = useState<{ id: string; content: string; senderId: string } | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const upgradeCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const match = matches.find(m => m.id === matchId);
   const isVoiceUnlocked = match?.unlocked_stage !== 'text';
@@ -36,9 +38,15 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   useEffect(() => {
     if (match && user?.tier) {
-      checkAndUpgradeUnlockStage(match, user.tier);
+      if (upgradeCheckTimer.current) clearTimeout(upgradeCheckTimer.current);
+      upgradeCheckTimer.current = setTimeout(() => {
+        checkAndUpgradeUnlockStage(match, user.tier);
+      }, 2000);
     }
-  }, [messages.length, user?.tier]);
+    return () => {
+      if (upgradeCheckTimer.current) clearTimeout(upgradeCheckTimer.current);
+    };
+  }, [messages.length]);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -53,6 +61,9 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   useEffect(() => {
     fetchMessages();
+    // Mark messages as read immediately when chat opens
+    chatService.markAsRead(matchId).catch(console.error);
+    clearUnreadCount(matchId);
 
     // Subscribe to new messages
     const unsubscribe = chatService.subscribeToMessages(matchId, (message) => {
@@ -101,7 +112,6 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return () => {
       unsubscribe();
       callUnsubscribe.unsubscribe();
-      chatService.markAsRead(matchId).catch(console.error);
     };
   }, [matchId, fetchMessages, user?.id, matchName, navigation]);
 
@@ -148,13 +158,19 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     if (!content.trim() || isSending) return;
     setIsSending(true);
 
-    // Optimistic update: add the message immediately so user sees it right away
+    const replyPrefix = replyTo
+      ? `> ${replyTo.content.substring(0, 60)}${replyTo.content.length > 60 ? '...' : ''}\n`
+      : '';
+    const fullContent = replyPrefix + content;
+    setReplyTo(null);
+
+    // Optimistic update
     const optimisticMessage: Message = {
       id: `optimistic-${Date.now()}`,
       match_id: matchId,
       from_user_id: user?.id || '',
       type: 'text',
-      content,
+      content: fullContent,
       read: false,
       created_at: new Date().toISOString(),
     };
@@ -164,7 +180,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       const sent = await chatService.sendMessage({
         match_id: matchId,
         type: 'text',
-        content,
+        content: fullContent,
       });
       // Replace the optimistic message with the real one from the server
       setMessages((prev) =>
@@ -310,7 +326,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     );
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
+  const renderMessage = useCallback(({ item }: { item: Message }) => (
     <MessageBubble
       message={{
         id: item.id,
@@ -325,8 +341,9 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       isOwn={item.from_user_id === user?.id}
       currentUserId={user?.id || ''}
       onMove={(newState) => handleMove(item.id, newState, item.game_data)}
+      onReply={setReplyTo}
     />
-  );
+  ), [user?.id, handleMove]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -395,9 +412,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
             contentContainerStyle={styles.messagesList}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
             keyboardShouldPersistTaps="handled"
+            removeClippedSubviews
+            maxToRenderPerBatch={15}
+            windowSize={10}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
@@ -406,6 +424,19 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           />
         )}
 
+        {replyTo && (
+          <View style={styles.replyBanner}>
+            <View style={styles.replyBannerContent}>
+              <Text style={styles.replyBannerLabel}>Replying to</Text>
+              <Text style={styles.replyBannerText} numberOfLines={1}>
+                {replyTo.content}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setReplyTo(null)} style={styles.replyBannerClose}>
+              <Text style={styles.replyBannerCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <ChatInput
           onSend={handleSend}
           onDateSuggest={handleDateSuggest}
@@ -511,5 +542,39 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: 'center',
+  },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  replyBannerContent: {
+    flex: 1,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+    paddingLeft: SPACING.sm,
+  },
+  replyBannerLabel: {
+    fontSize: 11,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    marginBottom: 2,
+  },
+  replyBannerText: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  replyBannerClose: {
+    padding: SPACING.sm,
+    marginLeft: SPACING.sm,
+  },
+  replyBannerCloseText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
   },
 });
