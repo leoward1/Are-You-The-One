@@ -27,7 +27,8 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://jaspfotwnmjqqwoujnfm.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84",
+        "EXPO_PUBLIC_DAILY_API_KEY": "YOUR_DAILY_API_KEY_HERE"
       }
     }
   },

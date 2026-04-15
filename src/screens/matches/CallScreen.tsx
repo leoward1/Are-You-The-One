@@ -8,6 +8,7 @@ import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
 import { useColors } from '../../hooks/useColors';
 import { callService } from '../../services';
 import { useAuthStore } from '../../store';
+import { supabase } from '../../config/supabase';
 
 type CallScreenProps = {
     route: RouteProp<MatchesStackParamList, 'Call'>;
@@ -82,10 +83,17 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                 }
                 // 2. If we are joining an existing call (incoming)
                 else {
-                    // In a real app, we'd fetch the session to get the URL
-                    const roomUrl = `https://areyoutheone.daily.co/match_${matchId.substring(0, 8)}`;
+                    // Fetch the actual room URL from the call session record
+                    const { data: session, error: sessionError } = await supabase
+                        .from('call_sessions')
+                        .select('daily_url')
+                        .eq('id', initialSessionId)
+                        .single();
+                    if (sessionError || !session?.daily_url) {
+                        throw new Error('Could not find call session. Please try again.');
+                    }
                     await co.join({
-                        url: roomUrl,
+                        url: session.daily_url,
                         userName: user?.first_name || 'User',
                         videoSource: callType === 'video',
                     });

@@ -53,11 +53,37 @@ class CallService {
                 throw new Error('Daily call limit reached (15/15) for Plus. Upgrade to Pro for unlimited calls!');
             }
 
-            // SECURITY: Generate a unique, unpredictable room URL per call session
-            // In production, a Supabase Edge Function should create the Daily room
-            // and return a time-limited meeting token for each participant.
-            const roomToken = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-            const roomUrl = `https://areyoutheone.daily.co/s_${roomToken}`;
+            // Create a real Daily.co room via REST API
+            const roomName = `match-${matchId.substring(0, 8)}-${Date.now()}`;
+            const dailyApiKey = process.env.EXPO_PUBLIC_DAILY_API_KEY;
+            let roomUrl: string;
+
+            if (dailyApiKey) {
+                const dailyRes = await fetch('https://api.daily.co/v1/rooms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${dailyApiKey}`,
+                    },
+                    body: JSON.stringify({
+                        name: roomName,
+                        properties: {
+                            exp: Math.floor(Date.now() / 1000) + 3600,
+                            max_participants: 2,
+                            enable_chat: false,
+                            start_video_off: kind === 'voice',
+                            start_audio_off: false,
+                        },
+                    }),
+                });
+                const dailyData = await dailyRes.json();
+                if (!dailyRes.ok || !dailyData.url) {
+                    throw new Error(dailyData.error || 'Failed to create call room');
+                }
+                roomUrl = dailyData.url;
+            } else {
+                throw new Error('Call service is not configured. Please contact support.');
+            }
 
             const { data, error } = await supabase
                 .from('call_sessions')
