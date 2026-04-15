@@ -41,6 +41,8 @@ interface SwipeCardProps {
   onSuperLike?: () => void;
   isFirst?: boolean;
   userGender?: Gender;
+  stackScale?: number;
+  stackY?: number;
 }
 
 export const SwipeCard: React.FC<SwipeCardProps> = ({
@@ -50,6 +52,8 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   onSuperLike,
   isFirst = false,
   userGender = 'male',
+  stackScale = 1,
+  stackY = 0,
 }) => {
   const COLORS = useColors();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
@@ -101,8 +105,9 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
     return {
       transform: [
         { translateX: translateX.value },
-        { translateY: translateY.value },
+        { translateY: translateY.value + stackY },
         { rotate: `${rotation.value}deg` },
+        { scale: stackScale },
       ],
     };
   });
@@ -233,6 +238,7 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     position: 'absolute',
     overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
     ...SHADOWS.large,
   },
   image: {

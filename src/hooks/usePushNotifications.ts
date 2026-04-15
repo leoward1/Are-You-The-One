@@ -3,8 +3,11 @@ import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { createNavigationContainerRef } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
 import { useAuthStore } from '../store';
+
+export const navigationRef = createNavigationContainerRef<any>();
 
 // Set up how notifications are handled when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -51,10 +54,29 @@ export function usePushNotifications() {
             setNotification(notification);
         });
 
-        // Listener for when user TAPS on a notification
+        // Listener for when user TAPS on a notification — deep link to correct screen
         responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log('User tapped notification:', response.notification.request.content);
-            // Handle deep linking or routing here if necessary
+            const data = response.notification.request.content.data as any;
+            if (!data || !navigationRef.isReady()) return;
+
+            if (data.type === 'message' && data.matchId) {
+                navigationRef.navigate('MatchesTab', {
+                    screen: 'Chat',
+                    params: { matchId: data.matchId, matchName: data.matchName || 'Match' },
+                });
+            } else if (data.type === 'match' && data.matchId) {
+                navigationRef.navigate('MatchesTab', {
+                    screen: 'Chat',
+                    params: { matchId: data.matchId, matchName: data.matchName || 'Your Match' },
+                });
+            } else if (data.type === 'call' && data.matchId) {
+                navigationRef.navigate('MatchesTab', {
+                    screen: 'Chat',
+                    params: { matchId: data.matchId, matchName: data.matchName || 'Match' },
+                });
+            } else {
+                navigationRef.navigate('MatchesTab', { screen: 'MatchList' });
+            }
         });
 
         return () => {

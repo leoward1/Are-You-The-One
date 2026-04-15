@@ -116,15 +116,13 @@ export default function SwipeDeckScreen({ navigation }: any) {
   };
 
   const handleSendMessage = () => {
-    if (animation.matchedId) {
-      const { matchedId, matchedName } = animation;
-      setAnimation({ type: null, visible: false });
-      navigation.navigate('Matches', { 
-        screen: 'Chat', 
-        params: { matchId: matchedId, matchName: matchedName || 'Your Match' } 
+    const { matchedId, matchedName } = animation;
+    setAnimation({ type: null, visible: false });
+    if (matchedId) {
+      navigation.navigate('MatchesTab', {
+        screen: 'Chat',
+        params: { matchId: matchedId, matchName: matchedName || 'Your Match' },
       });
-    } else {
-      setAnimation({ type: null, visible: false });
     }
   };
 

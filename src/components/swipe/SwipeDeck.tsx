@@ -104,17 +104,25 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({
         {profiles
           .slice(currentIndex, currentIndex + 3)
           .reverse()
-          .map((profile, index, arr) => (
-            <SwipeCard
-              key={profile.id}
-              profile={profile}
-              onSwipeLeft={handleSwipeLeft}
-              onSwipeRight={handleSwipeRight}
-              onSuperLike={handleSuperLike}
-              isFirst={index === arr.length - 1}
-              userGender={userGender}
-            />
-          ))}
+          .map((profile, index, arr) => {
+            const isTop = index === arr.length - 1;
+            // Back cards: slightly scaled down and offset upward so they peek behind the top card
+            const stackScale = isTop ? 1 : 1 - (arr.length - 1 - index) * 0.04;
+            const stackY = isTop ? 0 : (arr.length - 1 - index) * -10;
+            return (
+              <SwipeCard
+                key={profile.id}
+                profile={profile}
+                onSwipeLeft={handleSwipeLeft}
+                onSwipeRight={handleSwipeRight}
+                onSuperLike={handleSuperLike}
+                isFirst={isTop}
+                userGender={userGender}
+                stackScale={stackScale}
+                stackY={stackY}
+              />
+            );
+          })}
       </View>
 
       <View style={styles.buttonsContainer}>

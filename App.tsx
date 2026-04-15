@@ -7,7 +7,7 @@ import { StyleSheet, useColorScheme } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store';
-import { usePushNotifications } from './src/hooks/usePushNotifications';
+import { usePushNotifications, navigationRef } from './src/hooks/usePushNotifications';
 import { useThemeStore } from './src/store/useThemeStore';
 import { useAppSettingsStore } from './src/store/useAppSettingsStore';
 import { useNetworkStatus } from './src/hooks/useNetworkStatus';
@@ -77,7 +77,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <NavigationContainer onReady={() => { SplashScreen.hideAsync(); }}>
+        <NavigationContainer ref={navigationRef} onReady={() => { SplashScreen.hideAsync(); }}>
           <RootNavigator />
         </NavigationContainer>
         {!isOnline && <OfflineBanner />}
