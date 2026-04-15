@@ -34,9 +34,17 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
     const remoteParticipant = Object.values(participants).find(p => !p.local);
 
     useEffect(() => {
+        let hasNavigatedBack = false;
+        const safeGoBack = () => {
+            if (!hasNavigatedBack) {
+                hasNavigatedBack = true;
+                navigation.goBack();
+            }
+        };
+
         const initCall = async () => {
             try {
-                const co = callService.getCallObject();
+                const co = await callService.getFreshCallObject();
                 setCallObject(co);
 
                 // Setup listeners
@@ -58,13 +66,13 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                 });
 
                 co.on('left-meeting', () => {
-                    navigation.goBack();
+                    safeGoBack();
                 });
 
-                co.on('error', (event) => {
+                co.on('error', (event: any) => {
                     console.error('Call Error:', event);
-                    Alert.alert('Call Error', 'Something went wrong with the connection.');
-                    navigation.goBack();
+                    const msg = event?.errorMsg || event?.error?.msg || 'Connection failed. Please check your internet and try again.';
+                    Alert.alert('Call Error', msg, [{ text: 'OK', onPress: safeGoBack }]);
                 });
 
                 // 1. If we are initiating the call
@@ -78,7 +86,7 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                             videoSource: callType === 'video',
                         });
                     } else {
-                        throw new Error(response.message);
+                        throw new Error(response.message || 'Failed to start call. Make sure calls are enabled.');
                     }
                 }
                 // 2. If we are joining an existing call (incoming)
@@ -101,17 +109,15 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
 
             } catch (error: any) {
                 console.error('Failed to start call:', error);
-                Alert.alert('Error', error.message || 'Failed to connect to call');
-                navigation.goBack();
+                Alert.alert('Error', error.message || 'Failed to connect to call', [{ text: 'OK', onPress: safeGoBack }]);
             }
         };
 
         initCall();
 
         return () => {
-            if (callObject) {
-                callObject.leave();
-            }
+            hasNavigatedBack = true;
+            callService.getFreshCallObject().catch(() => {});
         };
     }, []);
 

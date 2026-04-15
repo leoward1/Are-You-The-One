@@ -5,6 +5,19 @@ import { CallSession, ApiResponse } from '../types';
 class CallService {
     private callObject: DailyCall | null = null;
 
+    async getFreshCallObject(): Promise<DailyCall> {
+        // Always destroy any existing call object before creating a new one
+        // to avoid stale state from previous failed or ended calls
+        if (this.callObject) {
+            try {
+                await this.callObject.destroy();
+            } catch (_) {}
+            this.callObject = null;
+        }
+        this.callObject = Daily.createCallObject();
+        return this.callObject;
+    }
+
     getCallObject(): DailyCall {
         if (!this.callObject) {
             this.callObject = Daily.createCallObject();
