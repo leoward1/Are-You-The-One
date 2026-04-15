@@ -18,9 +18,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { DiscoveryStackParamList } from '../../navigation/DiscoveryNavigator';
 import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
+import { supabase } from '../../config/supabase';
+import { useAuthStore } from '../../store';
 import { useColors } from '../../hooks/useColors';
 import { matchService } from '../../services';
-import { useAuthStore } from '../../store';
 import type { Profile, Gender } from '../../types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -157,25 +158,46 @@ export default function ProfileDetailScreen({ route, navigation }: ProfileDetail
     if (!profile) return;
     Alert.alert(
       'Report or Block',
-      `Are you sure you want to report or block ${profile.first_name}?`,
+      `What would you like to do with ${profile.first_name}?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Block User', 
+        {
+          text: 'Block User',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('User Blocked', `${profile.first_name} has been blocked and will no longer appear.`);
-            navigation.goBack();
-          }
+          onPress: async () => {
+            try {
+              if (!currentUser?.id) return;
+              await supabase.from('blocks').upsert(
+                { blocker_id: currentUser.id, blocked_user_id: profile.id },
+                { onConflict: 'blocker_id,blocked_user_id' }
+              );
+              Alert.alert('User Blocked', `${profile.first_name} has been blocked and will no longer appear.`, [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch {
+              Alert.alert('Error', 'Could not block user. Please try again.');
+            }
+          },
         },
-        { 
-          text: 'Report Profile', 
+        {
+          text: 'Report Profile',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Profile Reported', `Thank you. Our moderation team will review this profile within 24 hours.`);
-            navigation.goBack();
-          }
-        }
+          onPress: async () => {
+            try {
+              if (!currentUser?.id) return;
+              await supabase.from('reports').insert({
+                reporter_id: currentUser.id,
+                reported_user_id: profile.id,
+                reason: 'Reported from profile view',
+              });
+              Alert.alert('Profile Reported', 'Thank you. Our moderation team will review this profile within 24 hours.', [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch {
+              Alert.alert('Error', 'Could not submit report. Please try again.');
+            }
+          },
+        },
       ]
     );
   };

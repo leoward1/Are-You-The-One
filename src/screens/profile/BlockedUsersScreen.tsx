@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SPACING, FONTS, BORDER_RADIUS } from '../../utils/constants';
@@ -20,7 +21,7 @@ interface BlockedUser {
   blocked_profile: {
     id: string;
     first_name: string;
-    photo_url: string;
+    primary_photo: string;
   };
 }
 
@@ -44,7 +45,7 @@ export default function BlockedUsersScreen() {
         .select(`
           id,
           blocked_user_id,
-          blocked_profile:profiles!blocked_user_id(id, first_name, photo_url)
+          blocked_profile:profiles!blocked_user_id(id, first_name, primary_photo)
         `)
         .eq('blocker_id', user.id);
 
@@ -92,13 +93,19 @@ export default function BlockedUsersScreen() {
 
   const renderItem = ({ item }: { item: BlockedUser }) => (
     <View style={styles.userRow}>
-      <Avatar
-        name={item.blocked_profile?.first_name || 'User'}
-        source={item.blocked_profile?.photo_url}
-        size="medium"
-      />
+      <View style={styles.avatarWrapper}>
+        <Avatar
+          name={item.blocked_profile?.first_name || 'User'}
+          source={item.blocked_profile?.primary_photo}
+          size="medium"
+        />
+        <View style={styles.blockedBadge}>
+          <Text style={styles.blockedBadgeIcon}>🚫</Text>
+        </View>
+      </View>
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.blocked_profile?.first_name || 'Unknown User'}</Text>
+        <Text style={styles.blockedLabel}>Blocked</Text>
       </View>
       <Button
         title="Unblock"
@@ -139,8 +146,22 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING.xl },
   listContent: { padding: SPACING.md },
   userRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.md },
+  avatarWrapper: { position: 'relative' },
+  blockedBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  blockedBadgeIcon: { fontSize: 13 },
   userInfo: { flex: 1, marginLeft: SPACING.md },
   userName: { fontSize: 16, fontFamily: FONTS.semiBold, color: COLORS.text },
+  blockedLabel: { fontSize: 12, fontFamily: FONTS.regular, color: COLORS.error, marginTop: 2 },
   divider: { height: 1, backgroundColor: COLORS.border },
   emptyEmoji: { fontSize: 48, marginBottom: SPACING.md },
   emptyTitle: { fontSize: 20, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.sm },
