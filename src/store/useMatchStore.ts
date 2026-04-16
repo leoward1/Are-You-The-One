@@ -10,6 +10,7 @@ interface MatchState {
   dailyRevealsRemaining: number;
   isLoading: boolean;
   error: string | null;
+  activeMatchId: string | null;
 
   loadProfiles: () => Promise<void>;
   sendLike: (userId: string, type: LikeType, note?: string) => Promise<Match | null>;
@@ -20,6 +21,7 @@ interface MatchState {
   checkAndUpgradeUnlockStage: (match: Match, tier: string) => Promise<void>;
   subscribeToMatchUpdates: () => () => void;
   clearUnreadCount: (matchId: string) => void;
+  setActiveMatch: (matchId: string | null) => void;
   clearError: () => void;
 }
 
@@ -30,6 +32,7 @@ export const useMatchStore = create<MatchState>((set, get) => ({
   dailyRevealsRemaining: 10,
   isLoading: false,
   error: null,
+  activeMatchId: null,
 
   loadProfiles: async () => {
     set({ isLoading: true, error: null });
@@ -150,9 +153,10 @@ export const useMatchStore = create<MatchState>((set, get) => ({
             // Update last message and unread count
             targetMatch.last_message = newMessage;
             
-            // Check if message is from the other user to increment unread count
+            // Only increment unread if the chat for this match is NOT currently open
             supabase.auth.getUser().then(({ data }) => {
-              if (newMessage.from_user_id !== data.user?.id) {
+              const { activeMatchId } = get();
+              if (newMessage.from_user_id !== data.user?.id && activeMatchId !== newMessage.match_id) {
                 targetMatch.unread_count = (targetMatch.unread_count || 0) + 1;
               }
               targetMatch.updated_at = newMessage.created_at;
@@ -178,6 +182,19 @@ export const useMatchStore = create<MatchState>((set, get) => ({
         m.id === matchId ? { ...m, unread_count: 0 } : m
       ),
     });
+  },
+
+  setActiveMatch: (matchId: string | null) => {
+    set({ activeMatchId: matchId });
+    // Also clear unread immediately when entering a chat
+    if (matchId) {
+      const { matches } = get();
+      set({
+        matches: matches.map((m) =>
+          m.id === matchId ? { ...m, unread_count: 0 } : m
+        ),
+      });
+    }
   },
 
   clearError: () => set({ error: null }),

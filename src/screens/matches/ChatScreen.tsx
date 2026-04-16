@@ -23,7 +23,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { matchId, matchName } = route.params;
   const { user } = useAuthStore();
-  const { matches, checkAndUpgradeUnlockStage, clearUnreadCount } = useMatchStore();
+  const { matches, checkAndUpgradeUnlockStage, clearUnreadCount, setActiveMatch } = useMatchStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -60,11 +60,18 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   }, [matchId]);
 
   useEffect(() => {
+    // Register this chat as active so realtime subscription won't increment unread
+    setActiveMatch(matchId);
     fetchMessages();
     // Mark messages as read immediately when chat opens
     chatService.markAsRead(matchId).catch(console.error);
     clearUnreadCount(matchId);
 
+    // Clear active match when leaving chat
+    return () => { setActiveMatch(null); };
+  }, [matchId]);
+
+  useEffect(() => {
     // Subscribe to new messages
     const unsubscribe = chatService.subscribeToMessages(matchId, (message) => {
       if (message) {
