@@ -29,6 +29,7 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(callType === 'voice');
     const [sessionId, setSessionId] = useState<string | undefined>(initialSessionId);
+    const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const localParticipant = Object.values(participants).find(p => p.local);
     const remoteParticipant = Object.values(participants).find(p => !p.local);
@@ -51,10 +52,13 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                 co.on('joined-meeting', (event) => {
                     setCallState('connected');
                     setParticipants(co.participants());
+                    if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
                 });
 
                 co.on('participant-joined', (event) => {
                     setParticipants(co.participants());
+                    if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+                    setCallState('connected');
                 });
 
                 co.on('participant-updated', (event) => {
@@ -79,7 +83,33 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
                 if (!initialSessionId) {
                     const response = await callService.initiateCall(matchId, callType);
                     if (response.success && response.data) {
-                        setSessionId(response.data.id);
+                        const newSessionId = response.data.id;
+                        setSessionId(newSessionId);
+                        setCallState('ringing');
+
+                        // Auto-cancel if no answer in 45 seconds
+                        ringTimeoutRef.current = setTimeout(() => {
+                            callService.endCall(newSessionId);
+                            Alert.alert('No Answer', `${partnerName} didn't answer.`, [{ text: 'OK', onPress: safeGoBack }]);
+                        }, 45000);
+
+                        // Watch for callee accepting/declining via DB
+                        const sessionSub = supabase
+                            .channel(`call_status_${newSessionId}`)
+                            .on('postgres_changes', {
+                                event: 'UPDATE',
+                                schema: 'public',
+                                table: 'call_sessions',
+                                filter: `id=eq.${newSessionId}`,
+                            }, (payload) => {
+                                const updated = payload.new as any;
+                                if (updated.status === 'completed' || updated.status === 'declined') {
+                                    if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+                                    Alert.alert('Call Ended', `${partnerName} declined or ended the call.`, [{ text: 'OK', onPress: safeGoBack }]);
+                                }
+                            })
+                            .subscribe();
+
                         await co.join({
                             url: response.data.daily_url!,
                             userName: user?.first_name || 'User',
@@ -117,6 +147,7 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
 
         return () => {
             hasNavigatedBack = true;
+            if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
             callService.getFreshCallObject().catch(() => {});
         };
     }, []);
@@ -167,7 +198,10 @@ export default function CallScreen({ route, navigation }: CallScreenProps) {
             <View style={styles.header}>
                 <Text style={styles.partnerName}>{partnerName}</Text>
                 <Text style={styles.callStatus}>
-                    {callState === 'connecting' ? 'Connecting...' : callType.toUpperCase() + ' CALL'}
+                    {callState === 'connecting' ? 'Connecting...' :
+                     callState === 'ringing' ? 'Ringing...' :
+                     callState === 'connected' ? callType.toUpperCase() + ' CALL' :
+                     'Call Ended'}
                 </Text>
             </View>
 

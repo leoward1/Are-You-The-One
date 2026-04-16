@@ -90,8 +90,14 @@ export const useMatchStore = create<MatchState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await matchService.getMatches();
+      const { activeMatchId } = get();
+      // If a chat is currently open, force its unread_count to 0
+      // regardless of what the DB returned (messages are being read right now)
+      const corrected = response.data.map((m: Match) =>
+        m.id === activeMatchId ? { ...m, unread_count: 0 } : m
+      );
       set({
-        matches: response.data,
+        matches: corrected,
         isLoading: false,
       });
     } catch (error: any) {
