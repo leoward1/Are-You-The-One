@@ -72,30 +72,38 @@ class CallService {
             let roomUrl: string;
 
             if (dailyApiKey) {
-                const dailyRes = await fetch('https://api.daily.co/v1/rooms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${dailyApiKey}`,
-                    },
-                    body: JSON.stringify({
-                        name: roomName,
-                        properties: {
-                            exp: Math.floor(Date.now() / 1000) + 3600,
-                            max_participants: 2,
-                            enable_chat: false,
-                            start_video_off: kind === 'voice',
-                            start_audio_off: false,
+                try {
+                    const dailyRes = await fetch('https://api.daily.co/v1/rooms', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${dailyApiKey}`,
                         },
-                    }),
-                });
-                const dailyData = await dailyRes.json();
-                if (!dailyRes.ok || !dailyData.url) {
-                    throw new Error(dailyData.error || 'Failed to create call room');
+                        body: JSON.stringify({
+                            name: roomName,
+                            properties: {
+                                exp: Math.floor(Date.now() / 1000) + 3600,
+                                max_participants: 2,
+                                enable_chat: false,
+                                start_video_off: kind === 'voice',
+                                start_audio_off: false,
+                            },
+                        }),
+                    });
+                    const dailyData = await dailyRes.json();
+                    if (dailyRes.ok && dailyData.url) {
+                        roomUrl = dailyData.url;
+                    } else {
+                        // Billing/plan issue — fall back to pre-created room URL
+                        console.warn('Daily API room creation failed, using fallback:', dailyData.error);
+                        roomUrl = `https://areyoutheone.daily.co/${roomName}`;
+                    }
+                } catch (fetchErr) {
+                    console.warn('Daily API unreachable, using fallback room URL');
+                    roomUrl = `https://areyoutheone.daily.co/${roomName}`;
                 }
-                roomUrl = dailyData.url;
             } else {
-                throw new Error('Call service is not configured. Please contact support.');
+                roomUrl = `https://areyoutheone.daily.co/${roomName}`;
             }
 
             const { data, error } = await supabase

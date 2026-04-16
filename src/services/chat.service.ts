@@ -106,12 +106,19 @@ class ChatService {
 
     await this.checkMatchOwnership(matchId, user.id);
 
+    // Mark individual messages as read
     await supabase
       .from('messages')
       .update({ read: true })
       .eq('match_id', matchId)
       .neq('from_user_id', user.id)
       .eq('read', false);
+
+    // Zero out unread_count on the match row so MatchList reload shows correct count
+    await supabase
+      .from('matches')
+      .update({ unread_count: 0 })
+      .eq('id', matchId);
   }
 
   async shareDateSuggestion(matchId: string, suggestionId: string): Promise<Message> {
