@@ -161,12 +161,22 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return 'Offline';
   };
 
+  // Helper to strip existing quote markers and get clean text
+  const getCleanReplyText = (rawContent: string): string => {
+    // Remove all lines starting with > (existing quotes)
+    return rawContent
+      .split('\n')
+      .filter(line => !line.startsWith('>'))
+      .join('\n')
+      .substring(0, 60);
+  };
+
   const handleSend = async (content: string) => {
     if (!content.trim() || isSending) return;
     setIsSending(true);
 
     const replyPrefix = replyTo
-      ? `> ${replyTo.content.substring(0, 60)}${replyTo.content.length > 60 ? '...' : ''}\n`
+      ? `> ${getCleanReplyText(replyTo.content)}${replyTo.content.length > 60 ? '...' : ''}\n`
       : '';
     const fullContent = replyPrefix + content;
     setReplyTo(null);
@@ -436,7 +446,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
             <View style={styles.replyBannerContent}>
               <Text style={styles.replyBannerLabel}>Replying to</Text>
               <Text style={styles.replyBannerText} numberOfLines={1}>
-                {replyTo.content}
+                {replyTo.content.split('\n').filter(l => !l.startsWith('>')).join(' ')}
               </Text>
             </View>
             <TouchableOpacity onPress={() => setReplyTo(null)} style={styles.replyBannerClose}>

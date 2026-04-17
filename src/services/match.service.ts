@@ -14,6 +14,13 @@ class MatchService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Get current user's profile to check gender
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('gender')
+      .eq('id', user.id)
+      .single();
+
     // Get IDs the user already liked or passed
     const { data: likedIds } = await supabase
       .from('likes')
@@ -22,13 +29,20 @@ class MatchService {
 
     const excludeIds = [user.id, ...(likedIds || []).map((l: any) => l.to_user_id)];
 
-    // Fetch profiles not yet seen (only onboarded users, no verified-only gate)
-    const { data: profiles, error } = await supabase
+    // Build query with gender filter (show opposite gender)
+    let query = supabase
       .from('profiles')
       .select('*')
       .not('id', 'in', `(${excludeIds.join(',')})`)
-      .eq('is_onboarded', true)
-      .range(offset, offset + limit - 1);
+      .eq('is_onboarded', true);
+
+    // Filter by opposite gender if user has gender set
+    if (myProfile?.gender) {
+      const oppositeGender = myProfile.gender === 'male' ? 'female' : 'male';
+      query = query.eq('gender', oppositeGender);
+    }
+
+    const { data: profiles, error } = await query.range(offset, offset + limit - 1);
 
     if (error) throw new Error(error.message);
 
