@@ -100,11 +100,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onMove?.(newState);
             }}
           />
-        ) : (
-          <Text style={[styles.messageText, isOwn ? styles.ownText : styles.otherText]}>
-            {message.content}
-          </Text>
-        )}
+        ) : (() => {
+          const lines = message.content.split('\n');
+          const quoteLines = lines.filter(l => l.startsWith('> '));
+          const bodyLines = lines.filter(l => !l.startsWith('> '));
+          const quoteText = quoteLines.map(l => l.replace(/^> /, '')).join(' ');
+          const bodyText = bodyLines.join('\n').trim();
+          return (
+            <>
+              {quoteText.length > 0 && (
+                <View style={[styles.quoteBlock, isOwn ? styles.quoteBlockOwn : styles.quoteBlockOther]}>
+                  <Text style={[styles.quoteText, isOwn ? styles.quoteTextOwn : styles.quoteTextOther]} numberOfLines={2}>
+                    {quoteText}
+                  </Text>
+                </View>
+              )}
+              <Text style={[styles.messageText, isOwn ? styles.ownText : styles.otherText]}>
+                {bodyText}
+              </Text>
+            </>
+          );
+        })()}
       </View>
       {showTimestamp && (
         <Text style={[styles.timestamp, isOwn ? styles.ownTimestamp : styles.otherTimestamp]}>
@@ -204,6 +220,32 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     fontSize: 13,
     fontFamily: FONTS.bold,
     color: COLORS.primary,
+  },
+  quoteBlock: {
+    borderLeftWidth: 3,
+    paddingLeft: SPACING.sm,
+    paddingVertical: 2,
+    marginBottom: SPACING.xs,
+    borderRadius: 2,
+  },
+  quoteBlockOwn: {
+    borderLeftColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  quoteBlockOther: {
+    borderLeftColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '15',
+  },
+  quoteText: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    lineHeight: 18,
+  },
+  quoteTextOwn: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  quoteTextOther: {
+    color: COLORS.textSecondary,
   },
 });
 
