@@ -104,12 +104,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           const lines = message.content.split('\n');
           const quoteLines = lines.filter(l => l.startsWith('> '));
           const bodyLines = lines.filter(l => !l.startsWith('> '));
-          const quoteText = quoteLines.map(l => l.replace(/^> /, '')).join(' ');
+          const rawQuote = quoteLines.map(l => l.replace(/^> /, '')).join(' ');
           const bodyText = bodyLines.join('\n').trim();
+          // Parse "Name|quoted text" format
+          const pipIdx = rawQuote.indexOf('|');
+          const quoteSender = pipIdx !== -1 ? rawQuote.substring(0, pipIdx) : '';
+          const quoteText = pipIdx !== -1 ? rawQuote.substring(pipIdx + 1) : rawQuote;
           return (
             <>
               {quoteText.length > 0 && (
                 <View style={[styles.quoteBlock, isOwn ? styles.quoteBlockOwn : styles.quoteBlockOther]}>
+                  {quoteSender.length > 0 && (
+                    <Text style={[styles.quoteSender, isOwn ? styles.quoteSenderOwn : styles.quoteSenderOther]}>
+                      {quoteSender}
+                    </Text>
+                  )}
                   <Text style={[styles.quoteText, isOwn ? styles.quoteTextOwn : styles.quoteTextOther]} numberOfLines={2}>
                     {quoteText}
                   </Text>
@@ -246,6 +255,17 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
   },
   quoteTextOther: {
     color: COLORS.textSecondary,
+  },
+  quoteSender: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    marginBottom: 2,
+  },
+  quoteSenderOwn: {
+    color: 'rgba(255,255,255,0.9)',
+  },
+  quoteSenderOther: {
+    color: COLORS.primary,
   },
 });
 

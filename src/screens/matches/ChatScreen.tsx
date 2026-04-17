@@ -175,8 +175,11 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     if (!content.trim() || isSending) return;
     setIsSending(true);
 
+    const senderName = replyTo
+      ? (replyTo.senderId === user?.id ? 'You' : matchName || 'Them')
+      : '';
     const replyPrefix = replyTo
-      ? `> ${getCleanReplyText(replyTo.content)}${replyTo.content.length > 60 ? '...' : ''}\n`
+      ? `> ${senderName}|${getCleanReplyText(replyTo.content)}${replyTo.content.length > 60 ? '...' : ''}\n`
       : '';
     const fullContent = replyPrefix + content;
     setReplyTo(null);
