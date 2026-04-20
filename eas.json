@@ -38,6 +38,10 @@
         "appleId": "marquisrichburg@yahoo.com",
         "ascAppId": "6760871449",
         "appleTeamId": "L273M97SXC"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
       }
     }
   }

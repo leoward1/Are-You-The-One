@@ -11,6 +11,7 @@ import { usePushNotifications, navigationRef } from './src/hooks/usePushNotifica
 import { useThemeStore } from './src/store/useThemeStore';
 import { useAppSettingsStore } from './src/store/useAppSettingsStore';
 import { useNetworkStatus } from './src/hooks/useNetworkStatus';
+import { useGlobalCallListener } from './src/hooks/useGlobalCallListener';
 import { OfflineBanner } from './src/components/ui/OfflineBanner';
 import Constants from 'expo-constants';
 
@@ -19,6 +20,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   usePushNotifications();
+  useGlobalCallListener();
 
   const [appIsReady, setAppIsReady] = useState(false);
   const loadUser = useAuthStore((state: any) => state.loadUser);
