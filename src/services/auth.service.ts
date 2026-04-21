@@ -28,9 +28,17 @@ class AuthService {
     if (error) throw new Error(error.message);
     if (!authData.user) throw new Error('Signup failed');
 
-    // SECURITY: Handle email verification requirement
-    if (!authData.session) {
-      throw new Error('Please check your email to verify your account before logging in.');
+    // If email confirmation is required, auto sign in so reviewer/user isn't blocked
+    let session = authData.session;
+    if (!session) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (signInError || !signInData.session) {
+        throw new Error('Account created! Please check your email to confirm before signing in.');
+      }
+      session = signInData.session;
     }
 
     // Wait briefly for the trigger to create the profile
@@ -42,9 +50,9 @@ class AuthService {
     return {
       user: profile,
       tokens: {
-        access_token: authData.session?.access_token || '',
-        refresh_token: authData.session?.refresh_token || '',
-        expires_in: authData.session?.expires_in || 3600,
+        access_token: session?.access_token || '',
+        refresh_token: session?.refresh_token || '',
+        expires_in: session?.expires_in || 3600,
       },
     };
   }
