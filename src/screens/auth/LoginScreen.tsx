@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,6 +22,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const { login, signInWithApple, resetPassword, isLoading, error } = useAuthStore();
+  const [appleSignInAvailable, setAppleSignInAvailable] = useState(false);
+
+  useEffect(() => {
+    AppleAuthentication.isAvailableAsync().then(setAppleSignInAvailable).catch(() => setAppleSignInAvailable(false));
+  }, []);
 
   const validateForm = () => {
     let isValid = true;
@@ -57,6 +62,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   const handleAppleSignIn = async () => {
     try {
+      const available = await AppleAuthentication.isAvailableAsync();
+      if (!available) {
+        Alert.alert('Not Available', 'Apple Sign In is not available on this device.');
+        return;
+      }
       await signInWithApple();
       analyticsService.track('sign_up_completed', { method: 'apple' });
     } catch (err: any) {
@@ -153,7 +163,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             <View style={styles.dividerLine} />
           </View>
 
-          {Platform.OS === 'ios' && (
+          {Platform.OS === 'ios' && appleSignInAvailable && (
             <View style={styles.socialButtons}>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
