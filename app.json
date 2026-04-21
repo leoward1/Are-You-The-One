@@ -16,7 +16,7 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.areyoutheone.app",
       "entitlements": {
         "com.apple.developer.applesignin": [
