@@ -37,4 +37,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  global: {
+    fetch: async (url, options) => {
+      try {
+        const response = await fetch(url, options);
+        return response;
+      } catch (error: any) {
+        if (error?.message?.includes('Network request failed') || error?.message?.includes('network')) {
+          throw new Error('Unable to connect. Please check your internet connection and try again.');
+        }
+        throw error;
+      }
+    },
+  },
 });

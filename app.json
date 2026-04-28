@@ -29,7 +29,17 @@
         "NSPhotoLibraryUsageDescription": "We need photo library access to upload profile pictures.",
         "NSLocationWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for safety check-ins during dates.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {
+            "jaspfotwnmjqqwoujnfm.supabase.co": {
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSIncludesSubdomains": true
+            }
+          }
+        }
       },
       "buildNumber": "27"
     },
