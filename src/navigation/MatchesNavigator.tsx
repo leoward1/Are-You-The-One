@@ -4,9 +4,11 @@ import MatchListScreen from '@/screens/matches/MatchListScreen';
 import ChatScreen from '@/screens/matches/ChatScreen';
 import CallScreen from '@/screens/matches/CallScreen';
 import AddReviewScreen from '@/screens/matches/AddReviewScreen';
+import MatchCeremonyScreen from '@/screens/matches/MatchCeremonyScreen';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
+  MatchCeremony: undefined;
   Chat: { matchId: string; matchName?: string };
   Call: { matchId: string; partnerName?: string; callType: 'voice' | 'video'; sessionId?: string };
   AddReview: { matchId: string; partnerName?: string };
@@ -21,6 +23,11 @@ export default function MatchesNavigator() {
       <Stack.Screen
         name="MatchList"
         component={MatchListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MatchCeremony"
+        component={MatchCeremonyScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

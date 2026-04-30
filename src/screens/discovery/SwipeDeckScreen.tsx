@@ -144,9 +144,14 @@ export default function SwipeDeckScreen({ navigation }: any) {
         <View style={styles.header}>
           <Text style={styles.logo}>💕</Text>
           <Text style={styles.title}>Discover</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
-            <Text style={styles.headerEmoji}>💝</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.labButton} onPress={() => navigation.navigate('PerfectMatchLab')}>
+              <Text style={styles.labButtonText}>🧪 Lab</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
+              <Text style={styles.headerEmoji}>💝</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -161,9 +166,14 @@ export default function SwipeDeckScreen({ navigation }: any) {
       <View style={styles.header}>
         <Text style={styles.logo}>💕</Text>
         <Text style={styles.title}>Discover</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
-          <Text style={styles.headerEmoji}>💝</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.labButton} onPress={() => navigation.navigate('PerfectMatchLab')}>
+            <Text style={styles.labButtonText}>🧪 Lab</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('SuccessStories')}>
+            <Text style={styles.headerEmoji}>💝</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* FIX: Pass formatted profiles — handle both real DB shape and legacy shape */}
@@ -214,13 +224,29 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     paddingVertical: SPACING.sm,
     zIndex: 10,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   logo: {
     fontSize: 28,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: FONTS.bold,
     color: COLORS.text,
+  },
+  labButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  labButtonText: {
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: 12,
   },
   headerEmoji: {
     fontSize: 24,

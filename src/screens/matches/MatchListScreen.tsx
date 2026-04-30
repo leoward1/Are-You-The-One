@@ -133,7 +133,15 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Messages</Text>
+        <View style={styles.headerTopRow}>
+          <Text style={styles.title}>Messages</Text>
+          <TouchableOpacity
+            style={styles.ceremonyButton}
+            onPress={() => navigation.navigate('MatchCeremony')}
+          >
+            <Text style={styles.ceremonyButtonText}>💡 Ceremony</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity style={styles.searchBar} activeOpacity={0.9}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -196,7 +204,16 @@ export default function MatchListScreen({ navigation }: MatchListScreenProps) {
 const makeStyles = (COLORS: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   header: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 32, fontFamily: FONTS.bold, color: COLORS.text, marginBottom: SPACING.md },
+  ceremonyButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+    marginBottom: SPACING.md,
+  },
+  ceremonyButtonText: { color: COLORS.white, fontFamily: FONTS.bold, fontSize: 12 },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: SPACING.md, height: 48, marginBottom: SPACING.sm },
   searchIcon: { fontSize: 16, marginRight: SPACING.sm, opacity: 0.6 },
   searchInput: { flex: 1, fontSize: 16, fontFamily: FONTS.regular, color: COLORS.text },

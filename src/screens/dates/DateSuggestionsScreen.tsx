@@ -72,7 +72,15 @@ export default function DateSuggestionsScreen({ navigation, route }: any) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Date Ideas</Text>
+        <View style={styles.headerTopRow}>
+          <Text style={styles.title}>Date Ideas</Text>
+          <TouchableOpacity
+            style={styles.truthBoothButton}
+            onPress={() => navigation.navigate('TruthBooth')}
+          >
+            <Text style={styles.truthBoothButtonText}>🔍 Truth Booth</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.subtitle}>
           {user?.city ? `Showing ideas in ${user.city}` : 'Discover great places for your dates'}
         </Text>
@@ -128,10 +136,26 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     paddingTop: SPACING.md,
     marginBottom: SPACING.md,
   },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 28,
     fontFamily: FONTS.bold,
     color: COLORS.text,
+  },
+  truthBoothButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
+  },
+  truthBoothButtonText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontFamily: FONTS.bold,
   },
   subtitle: {
     fontSize: 14,
