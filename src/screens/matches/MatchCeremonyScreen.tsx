@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,8 +30,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
   const [revealedMatches, setRevealedMatches] = useState<Couple[]>([]);
   const [isRevealing, setIsRevealing] = useState(false);
   const [lightsOn, setLightsOn] = useState(false);
-  const pulseAnim = new Animated.Value(0);
-  const lightAnim = new Animated.Value(0);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchCeremonyData();
@@ -46,12 +45,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.timing(lightAnim, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: false,
-        }),
+        Animated.delay(1500),
       ]).start(() => {
         setLightsOn(true);
         setIsRevealing(false);
@@ -126,7 +120,6 @@ export default function MatchCeremonyScreen({ navigation }: any) {
     setIsRevealing(true);
     setLightsOn(false);
     pulseAnim.setValue(0);
-    lightAnim.setValue(0);
   };
 
   const getNextMatch = () => {
@@ -135,7 +128,6 @@ export default function MatchCeremonyScreen({ navigation }: any) {
       setCurrentMatch(revealedMatches[currentIndex + 1]);
       setLightsOn(false);
       pulseAnim.setValue(0);
-      lightAnim.setValue(0);
       setTimeout(() => setIsRevealing(true), 500);
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ export default function TruthBoothScreen({ navigation }: any) {
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [weeklyUsesLeft, setWeeklyUsesLeft] = useState(1);
-  const pulseAnim = new Animated.Value(0);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchPotentialMatches();
@@ -45,19 +45,19 @@ export default function TruthBoothScreen({ navigation }: any) {
           toValue: 1,
           duration: 800,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0,
           duration: 800,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 600,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start(() => {
         setIsRevealing(false);
@@ -67,8 +67,9 @@ export default function TruthBoothScreen({ navigation }: any) {
   }, [isRevealing]);
 
   const fetchPotentialMatches = async () => {
-    // Fetch user's matches who haven't used Truth Booth this week
-    const { data: matches } = await supabase
+    if (!user?.id) return;
+
+    const { data: matches, error } = await supabase
       .from('matches')
       .select(`
         id,
@@ -77,23 +78,26 @@ export default function TruthBoothScreen({ navigation }: any) {
         user_a:profiles!user_a_id(id, first_name, last_name, photo_url),
         user_b:profiles!user_b_id(id, first_name, last_name, photo_url)
       `)
-      .or(`user_a_id.eq.${user?.id},user_b_id.eq.${user?.id}`)
+      .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .eq('status', 'matched');
 
-    if (matches) {
-      const formatted = matches.map((m: any) => {
-        const isUserA = m.user_a_id === user?.id;
+    if (error || !matches) return;
+
+    const formatted = matches
+      .map((m: any) => {
+        const isUserA = m.user_a_id === user.id;
         const otherUser = isUserA ? m.user_b : m.user_a;
+        if (!otherUser) return null;
         return {
           id: m.id,
-          name: `${otherUser.first_name} ${otherUser.last_name}`,
+          name: `${otherUser.first_name || ''} ${otherUser.last_name || ''}`.trim() || 'User',
           photo: otherUser.photo_url,
-          compatibility: Math.floor(Math.random() * 40) + 60, // 60-100% simulated
-          usedTruthBooth: false, // Would check from truth_booth_uses table
+          compatibility: Math.floor(Math.random() * 40) + 60,
+          usedTruthBooth: false,
         };
-      });
-      setPotentialMatches(formatted);
-    }
+      })
+      .filter(Boolean) as PotentialMatch[];
+    setPotentialMatches(formatted);
   };
 
   const checkWeeklyUsesLeft = async () => {
