@@ -8,6 +8,7 @@ import {
   Animated,
   Easing,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '../../hooks/useColors';
@@ -30,6 +31,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
   const [revealedMatches, setRevealedMatches] = useState<Couple[]>([]);
   const [isRevealing, setIsRevealing] = useState(false);
   const [lightsOn, setLightsOn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
 
   const fetchCeremonyData = async () => {
     if (!user?.id) return;
+    setIsLoading(true);
 
     const { data: matches, error } = await supabase
       .from('matches')
@@ -86,9 +89,11 @@ export default function MatchCeremonyScreen({ navigation }: any) {
         const userB = profileMap.get(m.user_b_id);
         if (!userA || !userB) return null;
 
-        // Only show male-female pairings
-        const genders = [userA.gender, userB.gender].sort();
-        if (!(genders[0] === 'female' && genders[1] === 'male')) return null;
+        // Only show male-female pairings (skip filter if gender not set)
+        if (userA.gender && userB.gender) {
+          const genders = [userA.gender, userB.gender].sort();
+          if (!(genders[0] === 'female' && genders[1] === 'male')) return null;
+        }
 
         // Determine perfect match based on match age and engagement
         const matchAge = new Date().getTime() - new Date(m.created_at || Date.now()).getTime();
@@ -113,6 +118,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
       .filter(Boolean) as Couple[];
 
     setRevealedMatches(formatted);
+    setIsLoading(false);
   };
 
   const getCurrentWeek = () => {
@@ -288,13 +294,23 @@ export default function MatchCeremonyScreen({ navigation }: any) {
               This week's couples will be revealed one by one. Watch the lights to see if they're a Perfect Match!
             </Text>
 
-            <TouchableOpacity
-              style={[styles.startButton, { backgroundColor: theme.primary }]}
-              onPress={startCeremony}
-            >
-              <Ionicons name="flashlight" size={24} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.startButtonText}>Start Ceremony</Text>
-            </TouchableOpacity>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={theme.primary} style={{ marginBottom: SPACING.xl }} />
+            ) : revealedMatches.length === 0 ? (
+              <View style={{ alignItems: 'center', marginBottom: SPACING.xl }}>
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                  No matches to reveal yet. Keep swiping to find your perfect match!
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.startButton, { backgroundColor: theme.primary }]}
+                onPress={startCeremony}
+              >
+                <Ionicons name="flashlight" size={24} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.startButtonText}>Start Ceremony</Text>
+              </TouchableOpacity>
+            )}
 
             {/* Previous Matches */}
             {revealedMatches.length > 0 && (
@@ -528,5 +544,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontFamily: FONTS.bold,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontFamily: FONTS.regular,
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: SPACING.lg,
   },
 });
