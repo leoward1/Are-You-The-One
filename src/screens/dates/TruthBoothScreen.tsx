@@ -75,8 +75,8 @@ export default function TruthBoothScreen({ navigation }: any) {
         id,
         user_a_id,
         user_b_id,
-        user_a:profiles!user_a_id(id, first_name, last_name, photo_url),
-        user_b:profiles!user_b_id(id, first_name, last_name, photo_url)
+        user_a:profiles!user_a_id(id, first_name, last_name, photo_url, gender),
+        user_b:profiles!user_b_id(id, first_name, last_name, photo_url, gender)
       `)
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .eq('status', 'matched');
@@ -87,7 +87,13 @@ export default function TruthBoothScreen({ navigation }: any) {
       .map((m: any) => {
         const isUserA = m.user_a_id === user.id;
         const otherUser = isUserA ? m.user_b : m.user_a;
-        if (!otherUser) return null;
+        const currentUser = isUserA ? m.user_a : m.user_b;
+        if (!otherUser || !currentUser) return null;
+
+        // Only show opposite-gender matches
+        const genders = [currentUser.gender, otherUser.gender].sort();
+        if (!(genders[0] === 'female' && genders[1] === 'male')) return null;
+
         return {
           id: m.id,
           name: `${otherUser.first_name || ''} ${otherUser.last_name || ''}`.trim() || 'User',

@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '../../hooks/useColors';
 import { FONTS, SPACING, BORDER_RADIUS } from '../../utils/constants';
+import { useAuthStore } from '../../store/useAuthStore';
+import { supabase } from '../../config/supabase';
 
 const QUESTIONS = [
   {
@@ -37,16 +39,65 @@ const QUESTIONS = [
 export default function PerfectMatchLabScreen({ navigation }: any) {
   const COLORS = useColors();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { user } = useAuthStore();
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [resultScore, setResultScore] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [previousScore, setPreviousScore] = useState<number | null>(null);
 
   const totalAnswered = Object.keys(answers).length;
 
-  const calculateResult = () => {
+  // Load previous quiz result on mount
+  useEffect(() => {
+    loadPreviousResult();
+  }, []);
+
+  const loadPreviousResult = async () => {
+    if (!user?.id) return;
+    try {
+      const { data } = await supabase
+        .from('match_lab_results')
+        .select('score, answers')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data) {
+        setPreviousScore(data.score);
+        if (data.answers) setAnswers(data.answers);
+      }
+    } catch {
+      // Table may not exist yet — graceful fallback
+    }
+  };
+
+  const saveResult = async (score: number) => {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      await supabase.from('match_lab_results').upsert(
+        {
+          user_id: user.id,
+          score,
+          answers,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+    } catch {
+      // Table may not exist yet — result still shown in UI
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const calculateResult = async () => {
     const raw = Object.values(answers).reduce((acc, v) => acc + v, 0);
     const max = QUESTIONS.length * 3;
     const percent = Math.round((raw / max) * 100);
     setResultScore(percent);
+    await saveResult(percent);
   };
 
   return (
@@ -56,6 +107,14 @@ export default function PerfectMatchLabScreen({ navigation }: any) {
         <Text style={styles.subtitle}>
           This guided quiz powers your compatibility profile and gives stronger, less-random match suggestions.
         </Text>
+
+        {previousScore !== null && resultScore === null && (
+          <View style={styles.previousCard}>
+            <Text style={styles.previousLabel}>Your current blueprint score</Text>
+            <Text style={[styles.previousScore, { color: COLORS.primary }]}>{previousScore}%</Text>
+            <Text style={styles.previousHint}>Retake the quiz below to update your score.</Text>
+          </View>
+        )}
 
         {QUESTIONS.map((q) => (
           <View key={q.id} style={styles.card}>
@@ -76,17 +135,21 @@ export default function PerfectMatchLabScreen({ navigation }: any) {
         ))}
 
         <TouchableOpacity
-          style={[styles.cta, totalAnswered < QUESTIONS.length && styles.ctaDisabled]}
-          disabled={totalAnswered < QUESTIONS.length}
+          style={[styles.cta, (totalAnswered < QUESTIONS.length || saving) && styles.ctaDisabled]}
+          disabled={totalAnswered < QUESTIONS.length || saving}
           onPress={calculateResult}
         >
-          <Text style={styles.ctaText}>Reveal Compatibility Blueprint</Text>
+          {saving
+            ? <ActivityIndicator color={COLORS.white} size="small" />
+            : <Text style={styles.ctaText}>{previousScore !== null ? 'Update Blueprint' : 'Reveal Compatibility Blueprint'}</Text>
+          }
         </TouchableOpacity>
 
         {resultScore !== null && (
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Your compatibility blueprint score</Text>
             <Text style={styles.resultScore}>{resultScore}%</Text>
+            {saving && <ActivityIndicator color={COLORS.primary} style={{ marginBottom: SPACING.xs }} />}
             <Text style={styles.resultHint}>
               {resultScore >= 80
                 ? 'High intentional-match profile: prioritize depth, consistency, and value alignment.'
@@ -152,4 +215,16 @@ const makeStyles = (COLORS: any) =>
       paddingVertical: SPACING.sm,
     },
     secondaryCtaText: { color: COLORS.primary, fontFamily: FONTS.bold, fontSize: 14 },
+    previousCard: {
+      backgroundColor: COLORS.surface,
+      borderRadius: BORDER_RADIUS.lg,
+      padding: SPACING.md,
+      marginBottom: SPACING.lg,
+      alignItems: 'center' as const,
+      borderWidth: 1,
+      borderColor: COLORS.primary + '30',
+    },
+    previousLabel: { fontSize: 12, fontFamily: FONTS.medium, color: COLORS.textSecondary, marginBottom: SPACING.xs },
+    previousScore: { fontSize: 32, fontFamily: FONTS.bold, marginBottom: SPACING.xs },
+    previousHint: { fontSize: 12, fontFamily: FONTS.regular, color: COLORS.textSecondary },
   });

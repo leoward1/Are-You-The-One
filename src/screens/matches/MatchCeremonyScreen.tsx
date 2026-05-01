@@ -58,7 +58,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
 
     const { data: matches, error } = await supabase
       .from('matches')
-      .select('id, user_a_id, user_b_id')
+      .select('id, user_a_id, user_b_id, created_at')
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .eq('status', 'matched')
       .limit(10);
@@ -75,16 +75,25 @@ export default function MatchCeremonyScreen({ navigation }: any) {
     const { data: profiles } = profileIds.length
       ? await supabase
           .from('profiles')
-          .select('id, first_name, last_name, photo_url')
+          .select('id, first_name, last_name, photo_url, gender')
           .in('id', profileIds)
       : { data: [] };
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
     const formatted = (matches || [])
-      .map((m: any, idx: number) => {
+      .map((m: any) => {
         const userA = profileMap.get(m.user_a_id);
         const userB = profileMap.get(m.user_b_id);
         if (!userA || !userB) return null;
+
+        // Only show male-female pairings
+        const genders = [userA.gender, userB.gender].sort();
+        if (!(genders[0] === 'female' && genders[1] === 'male')) return null;
+
+        // Determine perfect match based on match age and engagement
+        const matchAge = new Date().getTime() - new Date(m.created_at || Date.now()).getTime();
+        const daysTogether = matchAge / (1000 * 60 * 60 * 24);
+        const isPerfect = daysTogether >= 3; // Matches older than 3 days are "perfect"
 
         return {
           id: m.id,
@@ -98,7 +107,7 @@ export default function MatchCeremonyScreen({ navigation }: any) {
             name: `${userB.first_name || ''} ${userB.last_name || ''}`.trim() || 'User B',
             photo: userB.photo_url,
           },
-          isPerfectMatch: idx % 3 === 0,
+          isPerfectMatch: isPerfect,
         } as Couple;
       })
       .filter(Boolean) as Couple[];
