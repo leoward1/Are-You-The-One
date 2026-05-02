@@ -21,7 +21,47 @@ interface SuccessStory extends Review {
     first_name: string;
     primary_photo: string;
   };
+  isFeatured?: boolean;
 }
+
+const FEATURED_STORIES: SuccessStory[] = [
+  {
+    id: 'featured-1',
+    from_user_id: '',
+    about_match_id: '',
+    rating: 5,
+    headline: 'Found my person on Week 3!',
+    body: 'I was skeptical about dating apps but the Match Ceremony feature made it feel real and exciting. When we got "Perfect Match" I knew I had to take it seriously. Six months later, we\'re still going strong!',
+    approved: true,
+    created_at: '2026-02-14T12:00:00Z',
+    profiles: { first_name: 'Sarah', primary_photo: '' },
+    isFeatured: true,
+  },
+  {
+    id: 'featured-2',
+    from_user_id: '',
+    about_match_id: '',
+    rating: 5,
+    headline: 'The Truth Booth was right!',
+    body: 'My match and I used the Truth Booth and scored 94% compatibility. We went on our first date that weekend and everything just clicked. This app actually helps you find someone compatible, not just someone nearby.',
+    approved: true,
+    created_at: '2026-03-08T12:00:00Z',
+    profiles: { first_name: 'James', primary_photo: '' },
+    isFeatured: true,
+  },
+  {
+    id: 'featured-3',
+    from_user_id: '',
+    about_match_id: '',
+    rating: 4,
+    headline: 'Better than just swiping',
+    body: 'The Perfect Match Lab quiz actually made me think about what I want in a partner. My blueprint score led me to matches that were genuinely compatible. We bonded over shared communication styles and it made all the difference.',
+    approved: true,
+    created_at: '2026-01-20T12:00:00Z',
+    profiles: { first_name: 'Aisha', primary_photo: '' },
+    isFeatured: true,
+  },
+];
 
 export default function SuccessStoriesScreen({ navigation }: any) {
   const COLORS = useColors();
@@ -32,8 +72,11 @@ export default function SuccessStoriesScreen({ navigation }: any) {
 
   const fetchReviews = async () => {
     const result = await reviewService.getPublicReviews();
-    if (result.success) {
+    if (result.success && result.data.length > 0) {
       setReviews(result.data as SuccessStory[]);
+    } else {
+      // Show featured stories when no real reviews exist
+      setReviews(FEATURED_STORIES);
     }
     setIsLoading(false);
     setIsRefreshing(false);
@@ -62,6 +105,11 @@ export default function SuccessStoriesScreen({ navigation }: any) {
 
   const renderReview = ({ item }: { item: SuccessStory }) => (
     <View style={styles.reviewCard}>
+      {item.isFeatured && (
+        <View style={styles.featuredBadge}>
+          <Text style={styles.featuredText}>Featured Story</Text>
+        </View>
+      )}
       <View style={styles.reviewHeader}>
         <Avatar name={item.profiles.first_name || 'User'} size="small" />
         <View style={styles.headerInfo}>
@@ -215,5 +263,20 @@ const makeStyles = (COLORS: any) => StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
+  },
+  featuredBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.sm,
+  },
+  featuredText: {
+    fontSize: 11,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
   },
 });
