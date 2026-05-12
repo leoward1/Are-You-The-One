@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@daily-co/react-native-daily-js": "^0.83.0",
@@ -65,6 +66,8 @@
     "eas-cli": "^18.7.0",
     "eslint": "^8.56.0",
     "eslint-config-expo": "~8.0.1",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "react-native-dotenv": "^3.4.11",
     "typescript": "^5.3.3"
   },

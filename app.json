@@ -45,6 +45,11 @@
     },
     "android": {
       "package": "com.areyoutheone.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#8B1538"
+      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
@@ -63,7 +68,13 @@
         {
           "backgroundColor": "#8B1538",
           "image": "./assets/icon.png",
-          "imageWidth": 280
+          "imageWidth": 280,
+          "android": {
+            "dark": {
+              "backgroundColor": "#8B1538",
+              "image": "./assets/icon.png"
+            }
+          }
         }
       ],
       "expo-secure-store",
@@ -97,6 +108,10 @@
         {
           "ios": {
             "deploymentTarget": "15.1"
+          },
+          "android": {
+            "extraParams": "-Xmx4096m -XX:MaxMetaspaceSize=512m",
+            "kotlinVersion": "1.9.24"
           }
         }
       ]
