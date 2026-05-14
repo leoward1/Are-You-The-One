@@ -111,7 +111,14 @@
             "newArchEnabled": false
           },
           "android": {
-            "newArchEnabled": false
+            "newArchEnabled": false,
+            "compileOptions": {
+              "sourceCompatibility": "17",
+              "targetCompatibility": "17"
+            },
+            "kotlinOptions": {
+              "jvmTarget": "17"
+            }
           }
         }
       ]
