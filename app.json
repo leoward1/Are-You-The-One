@@ -112,6 +112,7 @@
           },
           "android": {
             "newArchEnabled": false,
+            "kotlinVersion": "1.9.25",
             "compileOptions": {
               "sourceCompatibility": "17",
               "targetCompatibility": "17"
