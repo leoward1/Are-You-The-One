@@ -127,7 +127,8 @@
             }
           }
         }
-      ]
+      ],
+      "./plugins/withAndroidFixes"
     ],
     "extra": {
       "eas": {
