@@ -107,7 +107,6 @@
           "photosPermission": "We need photo library access to upload profile pictures."
         }
       ],
-      "react-native-iap",
       [
         "expo-build-properties",
         {
