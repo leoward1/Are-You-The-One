@@ -45,6 +45,10 @@
     },
     "android": {
       "gradleVersion": "8.6",
+      "gradleProperties": {
+        "android.useAndroidX": "true",
+        "android.enableJetifier": "true"
+      },
       "package": "com.areyoutheone.app",
       "versionCode": 1,
       "adaptiveIcon": {
