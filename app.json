@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Are You The One",
-    "slug": "are-you-the-one",
+    "slug": "areyoutheone",
     "scheme": "areyoutheone",
     "version": "1.0.10",
     "orientation": "portrait",
@@ -127,11 +127,11 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "8f6d34ae-e527-4db4-b666-fdb429efa627"
+        "projectId": "2da74c82-60d2-4ba1-b6d8-b4763c44f2a8"
       },
       "supabaseUrl": "https://jaspfotwnmjqqwoujnfm.supabase.co",
       "supabaseAnonKey": "sb_publishable_GH7GLZCvo9b99qrnsCNBUw_4S8gjI84"
     },
-    "owner": "mennrinn"
+    "owner": "sulaaaas-organization"
   }
 }
