@@ -44,6 +44,7 @@
       "buildNumber": "28"
     },
     "android": {
+      "gradleVersion": "8.6",
       "package": "com.areyoutheone.app",
       "versionCode": 1,
       "adaptiveIcon": {
